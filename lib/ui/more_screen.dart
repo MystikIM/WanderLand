@@ -8,6 +8,7 @@ import '../data/doc_store.dart';
 import '../theme/font_service.dart';
 import 'appearance_screen.dart';
 import '../domain/little.dart';
+import 'backup_screen.dart';
 import 'buddy_screen.dart';
 import 'journal_screen.dart';
 import 'little_scope.dart';
@@ -76,7 +77,13 @@ class MoreScreen extends StatelessWidget {
         onTap: () => Navigator.of(context)
             .push(MaterialPageRoute(builder: (_) => const JournalScreen())),
       ),
-      // MORE-TILES: Backup (Task 15) goes here.
+      ListTile(
+        leading: const Icon(Icons.backup_outlined),
+        title: const Text('Backup & restore'),
+        subtitle: const Text('Keep a copy of your whole system'),
+        onTap: () => Navigator.of(context)
+            .push(MaterialPageRoute(builder: (_) => const BackupScreen())),
+      ),
       ListTile(
         leading: const Icon(Icons.info_outline),
         title: const Text('About'),

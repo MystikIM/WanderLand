@@ -12,7 +12,10 @@ import 'controllers/buddy_controller.dart';
 import 'controllers/chat_controller.dart';
 import 'controllers/journal_controller.dart';
 import 'controllers/world_controller.dart';
+import 'data/backup_service.dart';
 import 'domain/alter_links.dart';
+import 'platform/device_backup_io.dart';
+import 'theme/font_service.dart';
 import 'domain/pin_lock.dart';
 import 'controllers/front_controller.dart';
 import 'controllers/settings_controller.dart';
@@ -44,6 +47,19 @@ class _PluralAppState extends State<PluralApp> with WidgetsBindingObserver {
     names: () => [for (final a in alters.all) NameRef(a.id, a.name)],
   )..load();
   late final PinLock pinLock = PinLock(widget.store);
+  late final BackupService backup = BackupService(widget.store, widget.docsDir);
+
+  Future<void> reloadAll() async {
+    await widget.settings.load();
+    await alters.load();
+    await front.load();
+    await journal.load();
+    await chat.load();
+    await world.load();
+    await buddy.load();
+    await FontService(widget.store, widget.docsDir).loadSaved();
+  }
+
   late final QuickAccessSync quickAccess = QuickAccessSync(
     shortcuts: QuickActionsPort(),
     widget: HomeWidgetPort(),
@@ -101,6 +117,9 @@ class _PluralAppState extends State<PluralApp> with WidgetsBindingObserver {
         ChangeNotifierProvider.value(value: chat),
         ChangeNotifierProvider.value(value: world),
         Provider<PinLock>.value(value: pinLock),
+        Provider<BackupApi>.value(value: backup),
+        Provider<BackupIo>.value(value: DeviceBackupIo()),
+        Provider<ReloadAll>.value(value: reloadAll),
         Provider<NotifierPort>.value(value: notifier),
         Provider<ImageStore>.value(value: images),
         Provider<DocStore>.value(value: widget.store),
