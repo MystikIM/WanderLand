@@ -2,9 +2,12 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
+import '../controllers/alter_controller.dart';
 import '../controllers/world_controller.dart';
 import '../data/image_store.dart';
 import '../domain/world.dart';
+import 'alter_link_nav.dart';
+import 'alters_screen.dart' show AlterAvatar;
 import 'appearance_screen.dart' show kSwatches;
 import 'scene_painters.dart';
 import 'world_entry_screen.dart';
@@ -116,6 +119,7 @@ class _WorldScreenState extends State<WorldScreen> {
   @override
   Widget build(BuildContext context) {
     final world = context.watch<WorldController>();
+    final alters = context.watch<AlterController>();
     final images = context.read<ImageStore>();
     final bg = world.backgroundPath == null ? null : images.resolve(world.backgroundPath!);
 
@@ -176,6 +180,35 @@ class _WorldScreenState extends State<WorldScreen> {
             onPressed: () => world.setBackground(null),
           ),
       ]),
+      Builder(builder: (context) {
+        final counts = world.alterMentionCounts();
+        final live = counts.entries.where((e) => alters.byId(e.key) != null).toList()
+          ..sort((a, b) {
+            final byCount = b.value.compareTo(a.value);
+            return byCount != 0
+                ? byCount
+                : alters.label(a.key).toLowerCase().compareTo(alters.label(b.key).toLowerCase());
+          });
+        if (live.isEmpty) return const SizedBox.shrink();
+        return Padding(
+          padding: const EdgeInsets.only(top: 8),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('Who lives here', style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 4),
+            Wrap(spacing: 8, children: [
+              for (final e in live)
+                ActionChip(
+                  key: Key('lives-${e.key}'),
+                  avatar: AlterAvatar(alter: alters.byId(e.key)!, radius: 12),
+                  label: Text(e.value > 1
+                      ? '${alters.label(e.key)} · ${e.value}'
+                      : alters.label(e.key)),
+                  onPressed: () => openAlterLink(context, [e.key]),
+                ),
+            ]),
+          ]),
+        );
+      }),
       const Divider(height: 24),
       if (world.entries.isEmpty)
         const Padding(

@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../controllers/alter_controller.dart';
 import '../controllers/world_controller.dart';
+import '../domain/alter_links.dart';
 import '../domain/world.dart';
+import 'alter_link_nav.dart';
+import 'alters_screen.dart' show AlterAvatar;
+import 'linked_text.dart';
 
 class WorldEntryScreen extends StatefulWidget {
   const WorldEntryScreen({super.key, this.existing});
@@ -14,6 +19,7 @@ class _WorldEntryScreenState extends State<WorldEntryScreen> {
   late final _title = TextEditingController(text: widget.existing?.title ?? '');
   late final _text = TextEditingController(text: widget.existing?.text ?? '');
   String? _error;
+  bool _read = false;
 
   @override
   void dispose() {
@@ -52,7 +58,14 @@ class _WorldEntryScreenState extends State<WorldEntryScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
+  Widget build(BuildContext context) {
+    final alters = context.watch<AlterController>();
+    final names = [for (final a in alters.all) NameRef(a.id, a.name)];
+    final mentioned = <String>{};
+    for (final s in AlterLinker.find(_text.text, names)) {
+      mentioned.addAll(s.alterIds);
+    }
+    return Scaffold(
         appBar: AppBar(
           title: Text(widget.existing == null ? 'Write about your world' : 'Your words'),
           actions: [
@@ -80,16 +93,49 @@ class _WorldEntryScreenState extends State<WorldEntryScreen> {
             decoration: const InputDecoration(labelText: 'Title (optional)'),
           ),
           const SizedBox(height: 12),
-          TextField(
-            key: const Key('world-text'),
-            controller: _text,
-            minLines: 8,
-            maxLines: null,
-            decoration: const InputDecoration(labelText: 'Your words'),
+          SegmentedButton<bool>(
+            key: const Key('world-mode'),
+            segments: const [
+              ButtonSegment(value: false, label: Text('Write')),
+              ButtonSegment(value: true, label: Text('Read')),
+            ],
+            selected: {_read},
+            onSelectionChanged: (v) => setState(() => _read = v.first),
           ),
+          const SizedBox(height: 12),
+          if (_read)
+            LinkedText(
+              text: _text.text,
+              names: names,
+              onTap: (ids) => openAlterLink(context, ids),
+            )
+          else
+            TextField(
+              key: const Key('world-text'),
+              controller: _text,
+              minLines: 8,
+              maxLines: null,
+              onChanged: (_) => setState(() {}),
+              decoration: const InputDecoration(labelText: 'Your words'),
+            ),
+          if (mentioned.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            const Text('Mentioned'),
+            Wrap(spacing: 8, children: [
+              for (final id in mentioned)
+                if (alters.byId(id) != null)
+                  ActionChip(
+                    key: Key('mention-$id'),
+                    avatar: AlterAvatar(alter: alters.byId(id)!, radius: 12),
+                    label: Text(alters.byId(id)!.name),
+                    onPressed: () => openAlterLink(context, [id]),
+                  ),
+            ]),
+          ],
           if (_error != null) Padding(padding: const EdgeInsets.only(top: 8), child: Text(_error!)),
           const SizedBox(height: 16),
           FilledButton(key: const Key('world-save'), onPressed: _save, child: const Text('Save')),
         ]),
       );
+  }
 }

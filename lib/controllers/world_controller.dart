@@ -1,12 +1,17 @@
 import 'package:flutter/foundation.dart';
 import '../data/doc_store.dart';
+import '../domain/alter_links.dart';
 import '../domain/ids.dart';
 import '../domain/world.dart';
 
 class WorldController extends ChangeNotifier {
-  WorldController(this._store, {Clock? clock, KeywordMatcher matcher = const KeywordMatcher()})
-      : _clock = clock ?? DateTime.now,
-        _matcher = matcher;
+  WorldController(
+    this._store, {
+    Clock? clock,
+    this._matcher = const KeywordMatcher(),
+    List<NameRef> Function()? names,
+  })  : _clock = clock ?? DateTime.now,
+        _names = names ?? (() => const <NameRef>[]);
 
   static const entriesCollection = 'world_entries';
   static const itemsCollection = 'world_items';
@@ -14,6 +19,7 @@ class WorldController extends ChangeNotifier {
   final DocStore _store;
   final Clock _clock;
   final KeywordMatcher _matcher;
+  final List<NameRef> Function() _names;
 
   List<WorldEntry> entries = const [];
   List<SceneItem> items = const [];
@@ -42,7 +48,7 @@ class WorldController extends ChangeNotifier {
     final before = items.map((i) => i.kind).toSet();
     final updated = SceneBuilder.sync(
       items: items,
-      mentions: _matcher.mentionsAll(entries.map((e) => e.text)),
+      mentions: _matcher.mentionsAll(entries.map((e) => AlterLinker.mask(e.text, _names()))),
       dismissed: dismissed,
       newId: () => IdGen.next(_clock()),
     );
@@ -55,6 +61,10 @@ class WorldController extends ChangeNotifier {
         if (!before.contains(i.kind)) i.kind,
     ];
   }
+
+  /// How many times each existing alter is mentioned across all entries.
+  Map<String, int> alterMentionCounts() =>
+      AlterLinker.counts(entries.map((e) => e.text), _names());
 
   Future<List<String>> addEntry({String title = '', String text = ''}) async {
     if (title.trim().isEmpty && text.trim().isEmpty) {

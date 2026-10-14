@@ -12,6 +12,7 @@ import 'controllers/buddy_controller.dart';
 import 'controllers/chat_controller.dart';
 import 'controllers/journal_controller.dart';
 import 'controllers/world_controller.dart';
+import 'domain/alter_links.dart';
 import 'domain/pin_lock.dart';
 import 'controllers/front_controller.dart';
 import 'controllers/settings_controller.dart';
@@ -38,7 +39,10 @@ class _PluralAppState extends State<PluralApp> with WidgetsBindingObserver {
   late final BuddyController buddy = BuddyController(widget.store)..load();
   late final JournalController journal = JournalController(widget.store)..load();
   late final ChatController chat = ChatController(widget.store)..load();
-  late final WorldController world = WorldController(widget.store)..load();
+  late final WorldController world = WorldController(
+    widget.store,
+    names: () => [for (final a in alters.all) NameRef(a.id, a.name)],
+  )..load();
   late final PinLock pinLock = PinLock(widget.store);
   late final QuickAccessSync quickAccess = QuickAccessSync(
     shortcuts: QuickActionsPort(),

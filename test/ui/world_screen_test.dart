@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:plural_app/controllers/alter_controller.dart';
 import 'package:plural_app/controllers/world_controller.dart';
 import 'package:plural_app/data/doc_store.dart';
 import 'package:plural_app/data/image_store.dart';
@@ -17,14 +18,19 @@ void main() {
     return w;
   }
 
-  Future<void> open(WidgetTester tester, WorldController w) => pumpScreen(
-        tester,
-        const WorldScreen(),
-        providers: [
-          ChangeNotifierProvider.value(value: w),
-          Provider.value(value: ImageStore(Directory.systemTemp)),
-        ],
-      );
+  Future<void> open(WidgetTester tester, WorldController w) async {
+    final alters = AlterController(MemoryDocStore());
+    await alters.load();
+    await pumpScreen(
+      tester,
+      const WorldScreen(),
+      providers: [
+        ChangeNotifierProvider.value(value: w),
+        ChangeNotifierProvider.value(value: alters),
+        Provider.value(value: ImageStore(Directory.systemTemp)),
+      ],
+    );
+  }
 
   testWidgets('a fresh inner world shows an empty scene and a gentle invitation', (tester) async {
     final w = await make();
