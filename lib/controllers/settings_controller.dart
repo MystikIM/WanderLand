@@ -44,6 +44,22 @@ class SystemProfile {
       );
 }
 
+class HeadsUpPrefs {
+  const HeadsUpPrefs({this.enabled = true, this.muted = const []});
+  final bool enabled;
+  final List<String> muted;
+
+  HeadsUpPrefs copyWith({bool? enabled, List<String>? muted}) =>
+      HeadsUpPrefs(enabled: enabled ?? this.enabled, muted: muted ?? this.muted);
+
+  Map<String, dynamic> toJson() => {'id': 'headsup', 'enabled': enabled, 'muted': muted};
+
+  factory HeadsUpPrefs.fromJson(Map<String, dynamic> j) => HeadsUpPrefs(
+        enabled: j['enabled'] as bool? ?? true,
+        muted: List<String>.from(j['muted'] as List? ?? const []),
+      );
+}
+
 class SettingsController extends ChangeNotifier {
   SettingsController(this._store);
   static const collection = 'settings';
@@ -52,8 +68,11 @@ class SettingsController extends ChangeNotifier {
   ThemeConfig theme = const ThemeConfig();
   Terminology terminology = Terminology.standard();
   SystemProfile profile = const SystemProfile();
+  HeadsUpPrefs headsUp = const HeadsUpPrefs();
 
   Future<void> load() async {
+    final h = await _store.get(collection, 'headsup');
+    if (h != null) headsUp = HeadsUpPrefs.fromJson(h);
     final t = await _store.get(collection, 'theme');
     final w = await _store.get(collection, 'terminology');
     final p = await _store.get(collection, 'profile');
@@ -72,6 +91,12 @@ class SettingsController extends ChangeNotifier {
   Future<void> setTerminology(Terminology t) async {
     terminology = t;
     await _store.put(collection, t.toJson());
+    notifyListeners();
+  }
+
+  Future<void> setHeadsUp(HeadsUpPrefs h) async {
+    headsUp = h;
+    await _store.put(collection, h.toJson());
     notifyListeners();
   }
 

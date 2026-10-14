@@ -3,9 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'app_info.dart';
 import 'controllers/alter_controller.dart';
+import 'controllers/front_controller.dart';
 import 'controllers/settings_controller.dart';
 import 'data/doc_store.dart';
 import 'data/image_store.dart';
+import 'domain/little.dart';
 import 'theme/theme_config.dart';
 import 'ui/home_shell.dart';
 import 'ui/onboarding_screen.dart';
@@ -22,6 +24,7 @@ class PluralApp extends StatefulWidget {
 class _PluralAppState extends State<PluralApp> {
   late final AlterController alters = AlterController(widget.store)..load();
   late final ImageStore images = ImageStore(widget.docsDir);
+  late final FrontController front = FrontController(widget.store)..load();
   // PROVIDERS: later tasks create their controllers here.
 
   @override
@@ -30,24 +33,29 @@ class _PluralAppState extends State<PluralApp> {
       providers: [
         ChangeNotifierProvider.value(value: widget.settings),
         ChangeNotifierProvider.value(value: alters),
+        ChangeNotifierProvider.value(value: front),
         Provider<ImageStore>.value(value: images),
         Provider<DocStore>.value(value: widget.store),
         Provider<Directory>.value(value: widget.docsDir),
         // PROVIDERS-LIST
       ],
-      child: Consumer<SettingsController>(
-        builder: (context, s, _) => MaterialApp(
-          title: appName,
-          debugShowCheckedModeBanner: false,
-          themeMode: themeModeOf(s.theme),
-          theme: buildTheme(s.theme, Brightness.light),
-          darkTheme: buildTheme(s.theme, Brightness.dark),
-          builder: (ctx, child) => MediaQuery(
-            data: MediaQuery.of(ctx).copyWith(textScaler: TextScaler.linear(s.theme.fontScale)),
-            child: child!,
-          ),
-          home: s.profile.onboarded ? const HomeShell() : const OnboardingScreen(),
-        ),
+      child: Consumer3<SettingsController, FrontController, AlterController>(
+        builder: (context, s, f, a, _) {
+          final id = f.primaryId;
+          final cfg = littleAdjust(s.theme, littleLevelOf(id == null ? null : a.byId(id)));
+          return MaterialApp(
+            title: appName,
+            debugShowCheckedModeBanner: false,
+            themeMode: themeModeOf(cfg),
+            theme: buildTheme(cfg, Brightness.light),
+            darkTheme: buildTheme(cfg, Brightness.dark),
+            builder: (ctx, child) => MediaQuery(
+              data: MediaQuery.of(ctx).copyWith(textScaler: TextScaler.linear(cfg.fontScale)),
+              child: child!,
+            ),
+            home: s.profile.onboarded ? const HomeShell() : const OnboardingScreen(),
+          );
+        },
       ),
     );
   }

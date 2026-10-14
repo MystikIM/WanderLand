@@ -3,10 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../controllers/alter_controller.dart';
+import '../controllers/settings_controller.dart';
 import '../data/image_store.dart';
+import '../domain/little.dart';
 import '../domain/models.dart';
 import '../domain/pronouns.dart';
 import 'appearance_screen.dart' show kSwatches;
+import 'little_scope.dart';
 
 class AlterEditScreen extends StatefulWidget {
   const AlterEditScreen({super.key, this.existing});
@@ -84,6 +87,42 @@ class _AlterEditScreenState extends State<AlterEditScreen> {
     nav.pop();
   }
 
+  List<Widget> _guardedActions(BuildContext context, AlterController alters) {
+    final level = currentLittleLevel(context);
+    final guardOn = context.watch<SettingsController>().profile.littleGuard;
+    if (!riskyActionsAllowed(level, guardOn: guardOn)) {
+      return [
+        IconButton(
+          key: const Key('guard-lock'),
+          icon: const Icon(Icons.lock_outline),
+          tooltip: LittleCopy(level)('guardMessage'),
+          onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(LittleCopy(level)('guardMessage')))),
+        ),
+      ];
+    }
+    return [
+      PopupMenuButton<String>(
+        onSelected: (v) async {
+          final nav = Navigator.of(context);
+          if (v == 'archive') {
+            await alters.setArchived(widget.existing!.id, !widget.existing!.archived);
+          } else {
+            await alters.delete(widget.existing!.id);
+          }
+          nav.popUntil((r) => r.isFirst);
+        },
+        itemBuilder: (_) => [
+          PopupMenuItem(
+            value: 'archive',
+            child: Text(widget.existing!.archived ? 'Unarchive' : 'Archive'),
+          ),
+          const PopupMenuItem(value: 'delete', child: Text('Delete for good')),
+        ],
+      ),
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
     final alters = context.read<AlterController>();
@@ -91,25 +130,7 @@ class _AlterEditScreenState extends State<AlterEditScreen> {
       appBar: AppBar(
         title: Text(widget.existing == null ? 'New' : 'Edit'),
         actions: [
-          if (widget.existing != null)
-            PopupMenuButton<String>(
-              onSelected: (v) async {
-                final nav = Navigator.of(context);
-                if (v == 'archive') {
-                  await alters.setArchived(widget.existing!.id, !widget.existing!.archived);
-                } else {
-                  await alters.delete(widget.existing!.id);
-                }
-                nav.popUntil((r) => r.isFirst);
-              },
-              itemBuilder: (_) => [
-                PopupMenuItem(
-                  value: 'archive',
-                  child: Text(widget.existing!.archived ? 'Unarchive' : 'Archive'),
-                ),
-                const PopupMenuItem(value: 'delete', child: Text('Delete for good')),
-              ],
-            ),
+          if (widget.existing != null) ..._guardedActions(context, alters),
         ],
       ),
       body: ListView(padding: const EdgeInsets.all(16), children: [

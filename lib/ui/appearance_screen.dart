@@ -131,6 +131,13 @@ class _AppearanceScreenState extends State<AppearanceScreen> {
           ),
         ],
         SwitchListTile(
+          key: const Key('headsup-switch'),
+          title: const Text('Gentle heads-ups'),
+          subtitle: const Text('A soft note like "Bob is often out around now" when you switch. Never blocks anything.'),
+          value: s.headsUp.enabled,
+          onChanged: (v) => s.setHeadsUp(s.headsUp.copyWith(enabled: v)),
+        ),
+        SwitchListTile(
           key: const Key('little-guard'),
           title: const Text('Little guard'),
           subtitle: const Text(

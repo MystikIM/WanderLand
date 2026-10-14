@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:plural_app/controllers/alter_controller.dart';
+import 'package:plural_app/controllers/front_controller.dart';
 import 'package:plural_app/controllers/settings_controller.dart';
 import 'package:plural_app/data/doc_store.dart';
 import 'package:plural_app/data/image_store.dart';
@@ -17,9 +18,12 @@ void main() {
     await s.load();
     final a = AlterController(store);
     await a.load();
+    final f = FrontController(store);
+    await f.load();
     await pumpScreen(tester, const HomeShell(), providers: [
       ChangeNotifierProvider.value(value: s),
       ChangeNotifierProvider.value(value: a),
+      ChangeNotifierProvider.value(value: f),
       Provider.value(value: ImageStore(Directory.systemTemp)),
       Provider<DocStore>.value(value: store),
       Provider<Directory>.value(value: Directory.systemTemp),
@@ -43,10 +47,13 @@ void main() {
     await s.load();
     final a = AlterController(store);
     await a.load();
+    final f = FrontController(store);
+    await f.load();
     await s.setTerminology(Terminology(const {'alters': 'headmates'}));
     await pumpScreen(tester, const HomeShell(), providers: [
       ChangeNotifierProvider.value(value: s),
       ChangeNotifierProvider.value(value: a),
+      ChangeNotifierProvider.value(value: f),
       Provider.value(value: ImageStore(Directory.systemTemp)),
       Provider<DocStore>.value(value: store),
       Provider<Directory>.value(value: Directory.systemTemp),

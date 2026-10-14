@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../controllers/settings_controller.dart';
+import '../app_links.dart';
 import 'alters_screen.dart';
 import 'coming_soon.dart';
+import 'front_screen.dart';
 import 'more_screen.dart';
+import 'switch_sheet.dart';
 
 class HomeShell extends StatefulWidget {
   const HomeShell({super.key, this.initialTab = 0});
@@ -11,7 +14,7 @@ class HomeShell extends StatefulWidget {
 
   /// Tab bodies in bottom-bar order. Tabs built in later tasks replace ComingSoon.
   static List<Widget Function()> tabs = [
-    () => const ComingSoon('Front'),
+    () => const FrontScreen(),
     () => const ComingSoon('Activity'),
     () => const AltersScreen(),
     () => const ComingSoon('Inner World'),
@@ -25,6 +28,26 @@ class HomeShell extends StatefulWidget {
 
 class _HomeShellState extends State<HomeShell> {
   late int _i = widget.initialTab;
+
+  @override
+  void initState() {
+    super.initState();
+    DeepLinks.switchRequests.addListener(_onSwitchRequest);
+  }
+
+  @override
+  void dispose() {
+    DeepLinks.switchRequests.removeListener(_onSwitchRequest);
+    super.dispose();
+  }
+
+  void _onSwitchRequest() {
+    if (!mounted) return;
+    setState(() => _i = 0);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) showSwitchSheet(context);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
