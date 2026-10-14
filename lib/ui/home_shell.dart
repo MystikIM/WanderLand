@@ -5,10 +5,10 @@ import '../app_links.dart';
 import 'activity_screen.dart';
 import 'alters_screen.dart';
 import 'chat_screen.dart';
-import 'coming_soon.dart';
 import 'front_screen.dart';
 import 'more_screen.dart';
 import 'switch_sheet.dart';
+import 'world_screen.dart';
 
 class HomeShell extends StatefulWidget {
   const HomeShell({super.key, this.initialTab = 0});
@@ -19,7 +19,7 @@ class HomeShell extends StatefulWidget {
     () => const FrontScreen(),
     () => const ActivityScreen(),
     () => const AltersScreen(),
-    () => const ComingSoon('Inner World'),
+    () => const WorldScreen(),
     () => const ChatScreen(),
     () => const MoreScreen(),
   ];

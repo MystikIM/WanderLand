@@ -11,6 +11,7 @@ import 'controllers/alter_controller.dart';
 import 'controllers/buddy_controller.dart';
 import 'controllers/chat_controller.dart';
 import 'controllers/journal_controller.dart';
+import 'controllers/world_controller.dart';
 import 'domain/pin_lock.dart';
 import 'controllers/front_controller.dart';
 import 'controllers/settings_controller.dart';
@@ -37,6 +38,7 @@ class _PluralAppState extends State<PluralApp> with WidgetsBindingObserver {
   late final BuddyController buddy = BuddyController(widget.store)..load();
   late final JournalController journal = JournalController(widget.store)..load();
   late final ChatController chat = ChatController(widget.store)..load();
+  late final WorldController world = WorldController(widget.store)..load();
   late final PinLock pinLock = PinLock(widget.store);
   late final QuickAccessSync quickAccess = QuickAccessSync(
     shortcuts: QuickActionsPort(),
@@ -93,6 +95,7 @@ class _PluralAppState extends State<PluralApp> with WidgetsBindingObserver {
         ChangeNotifierProvider.value(value: buddy),
         ChangeNotifierProvider.value(value: journal),
         ChangeNotifierProvider.value(value: chat),
+        ChangeNotifierProvider.value(value: world),
         Provider<PinLock>.value(value: pinLock),
         Provider<NotifierPort>.value(value: notifier),
         Provider<ImageStore>.value(value: images),
