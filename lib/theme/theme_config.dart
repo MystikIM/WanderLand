@@ -16,6 +16,7 @@ class ThemeConfig {
     this.fontFamily = 'Atkinson Hyperlegible',
     this.fontScale = 1.0,
     this.cornerRadius = 16,
+    this.alterLook = 'accent',
   });
 
   final int seedColor;
@@ -24,6 +25,7 @@ class ThemeConfig {
   final String fontFamily;
   final double fontScale;
   final double cornerRadius;
+  final String alterLook;
 
   ThemeConfig copyWith({
     int? seedColor,
@@ -32,6 +34,7 @@ class ThemeConfig {
     String? fontFamily,
     double? fontScale,
     double? cornerRadius,
+    String? alterLook,
   }) =>
       ThemeConfig(
         seedColor: seedColor ?? this.seedColor,
@@ -40,6 +43,7 @@ class ThemeConfig {
         fontFamily: fontFamily ?? this.fontFamily,
         fontScale: fontScale ?? this.fontScale,
         cornerRadius: cornerRadius ?? this.cornerRadius,
+        alterLook: alterLook ?? this.alterLook,
       );
 
   Map<String, dynamic> toJson() => {
@@ -50,6 +54,7 @@ class ThemeConfig {
         'fontFamily': fontFamily,
         'fontScale': fontScale,
         'cornerRadius': cornerRadius,
+        'alterLook': alterLook,
       };
 
   factory ThemeConfig.fromJson(Map<String, dynamic> j) => ThemeConfig(
@@ -59,6 +64,7 @@ class ThemeConfig {
         fontFamily: j['fontFamily'] as String? ?? 'Atkinson Hyperlegible',
         fontScale: (j['fontScale'] as num?)?.toDouble() ?? 1.0,
         cornerRadius: (j['cornerRadius'] as num?)?.toDouble() ?? 16,
+        alterLook: j['alterLook'] as String? ?? 'accent',
       );
 }
 
@@ -82,4 +88,18 @@ ThemeData buildTheme(ThemeConfig c, Brightness b) {
       border: OutlineInputBorder(borderRadius: BorderRadius.circular(c.cornerRadius)),
     ),
   );
+}
+
+/// Lets the look follow whoever is the primary front (their own color).
+/// Fonts, shapes and text size are never touched.
+ThemeConfig withAlterLook(ThemeConfig c, int? alterColor) {
+  if (alterColor == null) return c;
+  switch (c.alterLook) {
+    case 'off':
+      return c;
+    case 'full':
+      return c.copyWith(seedColor: alterColor, accentColor: alterColor);
+    default: // 'accent' and anything unknown
+      return c.copyWith(accentColor: alterColor);
+  }
 }

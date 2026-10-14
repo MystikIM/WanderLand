@@ -91,6 +91,20 @@ class _AppearanceScreenState extends State<AppearanceScreen> {
           onSelectionChanged: (v) => s.setTheme(t.copyWith(mode: v.first)),
         ),
         const SizedBox(height: 16),
+        Text('When someone is out, the app can take on their color',
+            style: Theme.of(context).textTheme.titleMedium),
+        const SizedBox(height: 8),
+        SegmentedButton<String>(
+          key: const Key('alter-look'),
+          segments: const [
+            ButtonSegment(value: 'off', label: Text('Off')),
+            ButtonSegment(value: 'accent', label: Text('Accent')),
+            ButtonSegment(value: 'full', label: Text('Whole app')),
+          ],
+          selected: {t.alterLook == 'off' || t.alterLook == 'full' ? t.alterLook : 'accent'},
+          onSelectionChanged: (v) => s.setTheme(t.copyWith(alterLook: v.first)),
+        ),
+        const SizedBox(height: 16),
         Text('Font', style: Theme.of(context).textTheme.titleMedium),
         Wrap(spacing: 8, children: [
           for (final f in [...kBundledFonts, ...widget.extraFonts])

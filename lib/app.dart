@@ -69,7 +69,8 @@ class _PluralAppState extends State<PluralApp> with WidgetsBindingObserver {
       child: Consumer3<SettingsController, FrontController, AlterController>(
         builder: (context, s, f, a, _) {
           final id = f.primaryId;
-          final cfg = littleAdjust(s.theme, littleLevelOf(id == null ? null : a.byId(id)));
+          final alter = id == null ? null : a.byId(id);
+          final cfg = littleAdjust(withAlterLook(s.theme, alter?.colorValue), littleLevelOf(alter));
           return MaterialApp(
             title: appName,
             debugShowCheckedModeBanner: false,
