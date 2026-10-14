@@ -7,7 +7,10 @@ import '../controllers/settings_controller.dart';
 import '../data/doc_store.dart';
 import '../theme/font_service.dart';
 import 'appearance_screen.dart';
+import '../domain/little.dart';
 import 'buddy_screen.dart';
+import 'journal_screen.dart';
+import 'little_scope.dart';
 import 'notifications_screen.dart';
 
 class MoreScreen extends StatelessWidget {
@@ -66,7 +69,14 @@ class MoreScreen extends StatelessWidget {
         onTap: () => Navigator.of(context)
             .push(MaterialPageRoute(builder: (_) => const NotificationsScreen())),
       ),
-      // MORE-TILES: Journal (Task 13), Backup (Task 15) go here.
+      ListTile(
+        leading: const Icon(Icons.menu_book_outlined),
+        title: Text(LittleCopy(currentLittleLevel(context))('journal')),
+        subtitle: const Text('Private writing, with an optional PIN'),
+        onTap: () => Navigator.of(context)
+            .push(MaterialPageRoute(builder: (_) => const JournalScreen())),
+      ),
+      // MORE-TILES: Backup (Task 15) goes here.
       ListTile(
         leading: const Icon(Icons.info_outline),
         title: const Text('About'),

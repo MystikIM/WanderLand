@@ -9,6 +9,9 @@ import 'platform/quick_access_sync.dart';
 import 'platform/local_notifier_port.dart';
 import 'controllers/alter_controller.dart';
 import 'controllers/buddy_controller.dart';
+import 'controllers/chat_controller.dart';
+import 'controllers/journal_controller.dart';
+import 'domain/pin_lock.dart';
 import 'controllers/front_controller.dart';
 import 'controllers/settings_controller.dart';
 import 'data/doc_store.dart';
@@ -32,6 +35,9 @@ class _PluralAppState extends State<PluralApp> with WidgetsBindingObserver {
   late final ImageStore images = ImageStore(widget.docsDir);
   late final FrontController front = FrontController(widget.store)..load();
   late final BuddyController buddy = BuddyController(widget.store)..load();
+  late final JournalController journal = JournalController(widget.store)..load();
+  late final ChatController chat = ChatController(widget.store)..load();
+  late final PinLock pinLock = PinLock(widget.store);
   late final QuickAccessSync quickAccess = QuickAccessSync(
     shortcuts: QuickActionsPort(),
     widget: HomeWidgetPort(),
@@ -85,6 +91,9 @@ class _PluralAppState extends State<PluralApp> with WidgetsBindingObserver {
         ChangeNotifierProvider.value(value: alters),
         ChangeNotifierProvider.value(value: front),
         ChangeNotifierProvider.value(value: buddy),
+        ChangeNotifierProvider.value(value: journal),
+        ChangeNotifierProvider.value(value: chat),
+        Provider<PinLock>.value(value: pinLock),
         Provider<NotifierPort>.value(value: notifier),
         Provider<ImageStore>.value(value: images),
         Provider<DocStore>.value(value: widget.store),
