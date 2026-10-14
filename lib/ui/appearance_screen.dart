@@ -11,9 +11,10 @@ const List<int> kSwatches = [
 ];
 
 class AppearanceScreen extends StatefulWidget {
-  const AppearanceScreen({super.key, required this.onImportFont});
+  const AppearanceScreen({super.key, required this.onImportFont, this.extraFonts = const []});
   /// Opens the file picker and imports a font (wired in More screen).
   final Future<void> Function() onImportFont;
+  final List<String> extraFonts;
 
   @override
   State<AppearanceScreen> createState() => _AppearanceScreenState();
@@ -92,9 +93,9 @@ class _AppearanceScreenState extends State<AppearanceScreen> {
         const SizedBox(height: 16),
         Text('Font', style: Theme.of(context).textTheme.titleMedium),
         Wrap(spacing: 8, children: [
-          for (final f in kBundledFonts)
+          for (final f in [...kBundledFonts, ...widget.extraFonts])
             ChoiceChip(
-              label: Text(f, style: TextStyle(fontFamily: f)),
+              label: Text(f.startsWith('custom:') ? f.substring(7) : f, style: TextStyle(fontFamily: f)),
               selected: t.fontFamily == f,
               onSelected: (_) => s.setTheme(t.copyWith(fontFamily: f)),
             ),
