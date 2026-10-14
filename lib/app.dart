@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 import 'app_info.dart';
 import 'app_links.dart';
 import 'platform/front_notification_sync.dart';
+import 'platform/quick_access_ports.dart';
+import 'platform/quick_access_sync.dart';
 import 'platform/local_notifier_port.dart';
 import 'controllers/alter_controller.dart';
 import 'controllers/buddy_controller.dart';
@@ -30,6 +32,13 @@ class _PluralAppState extends State<PluralApp> with WidgetsBindingObserver {
   late final ImageStore images = ImageStore(widget.docsDir);
   late final FrontController front = FrontController(widget.store)..load();
   late final BuddyController buddy = BuddyController(widget.store)..load();
+  late final QuickAccessSync quickAccess = QuickAccessSync(
+    shortcuts: QuickActionsPort(),
+    widget: HomeWidgetPort(),
+    alters: alters,
+    front: front,
+    onOpenSwitch: () => DeepLinks.switchRequests.value++,
+  );
   late final NotifierPort notifier = LocalNotifierPort();
   late final FrontNotificationSync notifySync = FrontNotificationSync(
     port: notifier,
@@ -47,6 +56,7 @@ class _PluralAppState extends State<PluralApp> with WidgetsBindingObserver {
     alters.addListener(_syncBuddy);
     front.addListener(_syncBuddy);
     notifySync.start(); // fire and forget; must not block startup
+    quickAccess.start();
   }
 
   @override
@@ -61,6 +71,7 @@ class _PluralAppState extends State<PluralApp> with WidgetsBindingObserver {
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     notifySync.dispose();
+    quickAccess.dispose();
     alters.removeListener(_syncBuddy);
     front.removeListener(_syncBuddy);
     super.dispose();
