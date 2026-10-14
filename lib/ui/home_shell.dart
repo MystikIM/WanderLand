@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../controllers/settings_controller.dart';
 import '../app_links.dart';
+import 'activity_screen.dart';
 import 'alters_screen.dart';
 import 'coming_soon.dart';
 import 'front_screen.dart';
@@ -15,7 +16,7 @@ class HomeShell extends StatefulWidget {
   /// Tab bodies in bottom-bar order. Tabs built in later tasks replace ComingSoon.
   static List<Widget Function()> tabs = [
     () => const FrontScreen(),
-    () => const ComingSoon('Activity'),
+    () => const ActivityScreen(),
     () => const AltersScreen(),
     () => const ComingSoon('Inner World'),
     () => const ComingSoon('Chat'),
