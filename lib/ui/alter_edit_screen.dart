@@ -29,7 +29,10 @@ class _AlterEditScreenState extends State<AlterEditScreen> {
     for (final e in (widget.existing?.customFields ?? {}).entries)
       MapEntry(TextEditingController(text: e.key), TextEditingController(text: e.value)),
   ];
+  late final _age = TextEditingController(text: widget.existing?.ageYears?.toString() ?? '');
+  late String _littleMode = widget.existing?.littleMode ?? 'auto';
   String? _nameError;
+  String? _ageError;
 
   List<String> _split(String s) =>
       s.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
@@ -50,8 +53,20 @@ class _AlterEditScreenState extends State<AlterEditScreen> {
       setState(() => _nameError = 'Please give them a name');
       return;
     }
+    int? age;
+    if (_age.text.trim().isNotEmpty) {
+      age = int.tryParse(_age.text.trim());
+      if (age == null || age < 0 || age > 150) {
+        setState(() => _ageError = 'Please use a number');
+        return;
+      }
+    }
+    setState(() => _ageError = null);
     final base = widget.existing ?? await alters.create(name: _name.text);
     await alters.save(base.copyWith(
+      ageYears: age,
+      clearAge: age == null,
+      littleMode: _littleMode,
       name: _name.text.trim(),
       pronouns: _pronouns.text.trim(),
       role: _role.text.trim(),
@@ -120,6 +135,28 @@ class _AlterEditScreenState extends State<AlterEditScreen> {
         ),
         const SizedBox(height: 12),
         TextField(controller: _role, decoration: const InputDecoration(labelText: 'Role')),
+        const SizedBox(height: 12),
+        TextField(
+          key: const Key('alter-age'),
+          controller: _age,
+          keyboardType: TextInputType.number,
+          decoration: InputDecoration(labelText: 'Age (how old they feel; optional)', errorText: _ageError),
+        ),
+        const SizedBox(height: 8),
+        SegmentedButton<String>(
+          key: const Key('alter-little-mode'),
+          segments: const [
+            ButtonSegment(value: 'auto', label: Text('Little: auto')),
+            ButtonSegment(value: 'on', label: Text('Always')),
+            ButtonSegment(value: 'off', label: Text('Never')),
+          ],
+          selected: {_littleMode},
+          onSelectionChanged: (v) => setState(() => _littleMode = v.first),
+        ),
+        const Padding(
+          padding: EdgeInsets.only(top: 4),
+          child: Text('Auto: a kid-friendly look appears when this person is out and under 13.'),
+        ),
         const SizedBox(height: 12),
         Wrap(spacing: 8, runSpacing: 8, children: [
           for (final c in kSwatches)

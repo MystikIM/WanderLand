@@ -4,6 +4,7 @@ import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:provider/provider.dart';
 import '../controllers/alter_controller.dart';
 import '../data/image_store.dart';
+import '../domain/little.dart';
 import 'alter_edit_screen.dart';
 import 'alters_screen.dart';
 
@@ -47,6 +48,11 @@ class AlterDetailScreen extends StatelessWidget {
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(a.name, style: Theme.of(context).textTheme.headlineSmall),
               if (a.pronouns.isNotEmpty) Text(a.pronouns),
+              if (littleLevelOf(a) != LittleLevel.none)
+                Chip(
+                  visualDensity: VisualDensity.compact,
+                  label: Text(a.ageYears == null ? 'little' : 'little · age ${a.ageYears}'),
+                ),
               if (a.role.isNotEmpty) Text(a.role),
             ]),
           ),

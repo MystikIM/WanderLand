@@ -130,15 +130,22 @@ class _AppearanceScreenState extends State<AppearanceScreen> {
             decoration: InputDecoration(labelText: 'What we call "$k"'),
           ),
         ],
+        SwitchListTile(
+          key: const Key('little-guard'),
+          title: const Text('Little guard'),
+          subtitle: const Text(
+              'While a little is out, risky things (deleting, restoring backups) ask for a grown-up alter.'),
+          value: s.profile.littleGuard,
+          onChanged: (v) => s.setProfile(s.profile.copyWith(littleGuard: v)),
+        ),
         const SizedBox(height: 16),
         FilledButton(
           key: const Key('save-words'),
           onPressed: () async {
             await s.setTerminology(Terminology({for (final e in _ctrls.entries) e.key: e.value.text}));
-            await s.setProfile(SystemProfile(
+            await s.setProfile(s.profile.copyWith(
               systemName: _name.text.trim(),
               greeting: _greeting.text.trim(),
-              onboarded: s.profile.onboarded,
             ));
           },
           child: const Text('Save my words'),

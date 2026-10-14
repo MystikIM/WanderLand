@@ -15,11 +15,15 @@ class Alter {
     this.tags = const [],
     this.groups = const [],
     this.customFields = const {},
+    this.ageYears,
+    this.littleMode = 'auto',
   });
 
   final String id;
   final String name;
   final DateTime createdAt;
+  final int? ageYears;
+  final String littleMode;
   final String pronouns;
   final String role;
   final int colorValue;
@@ -45,10 +49,15 @@ class Alter {
     List<String>? tags,
     List<String>? groups,
     Map<String, String>? customFields,
+    int? ageYears,
+    bool clearAge = false,
+    String? littleMode,
   }) =>
       Alter(
         id: id,
         createdAt: createdAt,
+        ageYears: clearAge ? null : (ageYears ?? this.ageYears),
+        littleMode: littleMode ?? this.littleMode,
         name: name ?? this.name,
         pronouns: pronouns ?? this.pronouns,
         role: role ?? this.role,
@@ -76,6 +85,8 @@ class Alter {
         'tags': tags,
         'groups': groups,
         'customFields': customFields,
+        'ageYears': ageYears,
+        'littleMode': littleMode,
       };
 
   factory Alter.fromJson(Map<String, dynamic> j) => Alter(
@@ -92,6 +103,8 @@ class Alter {
         tags: List<String>.from(j['tags'] as List? ?? const []),
         groups: List<String>.from(j['groups'] as List? ?? const []),
         customFields: Map<String, String>.from(j['customFields'] as Map? ?? const {}),
+        ageYears: j['ageYears'] as int?,
+        littleMode: j['littleMode'] as String? ?? 'auto',
       );
 }
 

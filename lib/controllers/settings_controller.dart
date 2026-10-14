@@ -4,22 +4,43 @@ import '../theme/terminology.dart';
 import '../theme/theme_config.dart';
 
 class SystemProfile {
-  const SystemProfile({this.systemName = '', this.greeting = '', this.onboarded = false});
+  const SystemProfile({
+    this.systemName = '',
+    this.greeting = '',
+    this.onboarded = false,
+    this.littleGuard = true,
+  });
   final String systemName;
   final String greeting;
   final bool onboarded;
+  final bool littleGuard;
+
+  SystemProfile copyWith({
+    String? systemName,
+    String? greeting,
+    bool? onboarded,
+    bool? littleGuard,
+  }) =>
+      SystemProfile(
+        systemName: systemName ?? this.systemName,
+        greeting: greeting ?? this.greeting,
+        onboarded: onboarded ?? this.onboarded,
+        littleGuard: littleGuard ?? this.littleGuard,
+      );
 
   Map<String, dynamic> toJson() => {
         'id': 'profile',
         'systemName': systemName,
         'greeting': greeting,
         'onboarded': onboarded,
+        'littleGuard': littleGuard,
       };
 
   factory SystemProfile.fromJson(Map<String, dynamic> j) => SystemProfile(
         systemName: j['systemName'] as String? ?? '',
         greeting: j['greeting'] as String? ?? '',
         onboarded: j['onboarded'] as bool? ?? false,
+        littleGuard: j['littleGuard'] as bool? ?? true,
       );
 }
 
