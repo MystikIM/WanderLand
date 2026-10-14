@@ -8,6 +8,7 @@ import '../data/doc_store.dart';
 import '../theme/font_service.dart';
 import 'appearance_screen.dart';
 import 'buddy_screen.dart';
+import 'notifications_screen.dart';
 
 class MoreScreen extends StatelessWidget {
   const MoreScreen({super.key});
@@ -57,6 +58,13 @@ class MoreScreen extends StatelessWidget {
         subtitle: const Text('Your little companion and what you have earned'),
         onTap: () => Navigator.of(context)
             .push(MaterialPageRoute(builder: (_) => const BuddyScreen())),
+      ),
+      ListTile(
+        leading: const Icon(Icons.notifications_outlined),
+        title: const Text('Notifications'),
+        subtitle: const Text('Who is out, lock screen privacy, check-in reminders'),
+        onTap: () => Navigator.of(context)
+            .push(MaterialPageRoute(builder: (_) => const NotificationsScreen())),
       ),
       // MORE-TILES: Journal (Task 13), Backup (Task 15) go here.
       ListTile(

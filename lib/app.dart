@@ -2,6 +2,9 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'app_info.dart';
+import 'app_links.dart';
+import 'platform/front_notification_sync.dart';
+import 'platform/local_notifier_port.dart';
 import 'controllers/alter_controller.dart';
 import 'controllers/buddy_controller.dart';
 import 'controllers/front_controller.dart';
@@ -27,6 +30,14 @@ class _PluralAppState extends State<PluralApp> with WidgetsBindingObserver {
   late final ImageStore images = ImageStore(widget.docsDir);
   late final FrontController front = FrontController(widget.store)..load();
   late final BuddyController buddy = BuddyController(widget.store)..load();
+  late final NotifierPort notifier = LocalNotifierPort();
+  late final FrontNotificationSync notifySync = FrontNotificationSync(
+    port: notifier,
+    settings: widget.settings,
+    alters: alters,
+    front: front,
+    onOpenSwitch: () => DeepLinks.switchRequests.value++,
+  );
   // PROVIDERS: later tasks create their controllers here.
 
   @override
@@ -35,6 +46,7 @@ class _PluralAppState extends State<PluralApp> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     alters.addListener(_syncBuddy);
     front.addListener(_syncBuddy);
+    notifySync.start(); // fire and forget; must not block startup
   }
 
   @override
@@ -48,6 +60,7 @@ class _PluralAppState extends State<PluralApp> with WidgetsBindingObserver {
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    notifySync.dispose();
     alters.removeListener(_syncBuddy);
     front.removeListener(_syncBuddy);
     super.dispose();
@@ -61,6 +74,7 @@ class _PluralAppState extends State<PluralApp> with WidgetsBindingObserver {
         ChangeNotifierProvider.value(value: alters),
         ChangeNotifierProvider.value(value: front),
         ChangeNotifierProvider.value(value: buddy),
+        Provider<NotifierPort>.value(value: notifier),
         Provider<ImageStore>.value(value: images),
         Provider<DocStore>.value(value: widget.store),
         Provider<Directory>.value(value: widget.docsDir),
