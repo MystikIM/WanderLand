@@ -6,7 +6,7 @@ void main() {
   test('Alter survives a JSON round trip, including odd names', () {
     final a = Alter(
       id: 'a1',
-      name: 'Bob 🌲 ‮עברית',
+      name: 'Bob 🌲 \u202Eעברית',
       createdAt: DateTime(2026, 10, 14),
       pronouns: 'xe/xem',
       tags: const ['protector'],
