@@ -131,6 +131,13 @@ class _AppearanceScreenState extends State<AppearanceScreen> {
           ),
         ],
         SwitchListTile(
+          key: const Key('quotes-switch'),
+          title: const Text('Daily kind note'),
+          subtitle: const Text('A short positive note when you open the app.'),
+          value: s.quotes.enabled,
+          onChanged: (v) => s.setQuotes(s.quotes.copyWith(enabled: v)),
+        ),
+        SwitchListTile(
           key: const Key('headsup-switch'),
           title: const Text('Gentle heads-ups'),
           subtitle: const Text('A soft note like "Bob is often out around now" when you switch. Never blocks anything.'),

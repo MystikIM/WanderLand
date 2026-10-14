@@ -9,28 +9,31 @@ class BuddyView extends StatelessWidget {
     required this.color,
     required this.mood,
     this.accessory = '',
+    this.outfit = '',
     this.size = 120,
   });
   final String species;
   final Color color;
   final BuddyMood mood;
   final String accessory;
+  final String outfit;
   final double size;
 
   @override
   Widget build(BuildContext context) => SizedBox(
         width: size,
         height: size,
-        child: CustomPaint(painter: _BuddyPainter(species, color, mood, accessory)),
+        child: CustomPaint(painter: _BuddyPainter(species, color, mood, accessory, outfit)),
       );
 }
 
 class _BuddyPainter extends CustomPainter {
-  _BuddyPainter(this.species, this.color, this.mood, this.accessory);
+  _BuddyPainter(this.species, this.color, this.mood, this.accessory, this.outfit);
   final String species;
   final Color color;
   final BuddyMood mood;
   final String accessory;
+  final String outfit;
 
   Path _star(Offset c, double r) {
     final p = Path();
@@ -53,6 +56,17 @@ class _BuddyPainter extends CustomPainter {
     final dark = Paint()..color = Color.lerp(color, const Color(0xFF000000), .25)!;
     final light = Paint()..color = Color.lerp(color, const Color(0xFFFFFFFF), .4)!;
     const sides = [-1.0, 1.0];
+    if (outfit == 'cape') {
+      c.drawPath(
+        Path()
+          ..moveTo(cx - w * .30, h * .50)
+          ..lineTo(cx - w * .46, h * .98)
+          ..lineTo(cx + w * .46, h * .98)
+          ..lineTo(cx + w * .30, h * .50)
+          ..close(),
+        Paint()..color = const Color(0xFFD32F2F),
+      );
+    }
     switch (species) {
       case 'cat':
         for (final dx in sides) {
@@ -162,6 +176,45 @@ class _BuddyPainter extends CustomPainter {
     }
   }
 
+  void _outfit(Canvas c, double w, double h, double cx) {
+    RRect box(double l, double t, double ww, double hh, double r) =>
+        RRect.fromRectAndRadius(Rect.fromLTWH(l, t, ww, hh), Radius.circular(r));
+    switch (outfit) {
+      case 'shirt':
+        final p = Paint()..color = const Color(0xFF4DA3FF);
+        c.drawRRect(box(w * .24, h * .74, w * .52, h * .18, h * .05), p);
+        for (final dx in [-1.0, 1.0]) {
+          c.drawOval(Rect.fromCenter(center: Offset(cx + dx * w * .28, h * .77), width: w * .14, height: h * .10), p);
+        }
+      case 'hoodie':
+        c.drawRRect(box(w * .20, h * .72, w * .60, h * .22, h * .06), Paint()..color = const Color(0xFF7E57C2));
+        c.drawRRect(box(w * .36, h * .82, w * .28, h * .08, h * .03), Paint()..color = const Color(0x33000000));
+        final string = Paint()
+          ..color = const Color(0xFFFFFFFF)
+          ..strokeWidth = w * .02
+          ..strokeCap = StrokeCap.round;
+        for (final dx in [-1.0, 1.0]) {
+          c.drawLine(Offset(cx + dx * w * .06, h * .72), Offset(cx + dx * w * .06, h * .80), string);
+        }
+      case 'dress':
+        c.drawPath(
+          Path()
+            ..moveTo(cx - w * .14, h * .72)
+            ..lineTo(cx + w * .14, h * .72)
+            ..lineTo(cx + w * .30, h * .94)
+            ..lineTo(cx - w * .30, h * .94)
+            ..close(),
+          Paint()..color = const Color(0xFFFF8CC6),
+        );
+      case 'pajamas':
+        c.drawRRect(box(w * .22, h * .72, w * .56, h * .22, h * .05), Paint()..color = const Color(0xFF9FA8DA));
+        final dot = Paint()..color = const Color(0xFFFFFFFF);
+        for (var i = 0; i < 3; i++) {
+          c.drawCircle(Offset(cx - w * .16 + i * w * .16, h * .83), w * .025, dot);
+        }
+    }
+  }
+
   @override
   void paint(Canvas c, Size s) {
     final w = s.width, h = s.height, cx = w / 2;
@@ -194,6 +247,7 @@ class _BuddyPainter extends CustomPainter {
     }
     c.drawArc(Rect.fromCenter(center: Offset(cx, h * .66), width: w * .14, height: w * .09), 0, pi, false, ink);
     _frontOfFace(c, w, h, cx, ink, fill);
+    _outfit(c, w, h, cx);
 
     final gold = Paint()..color = const Color(0xFFFFC94D);
     switch (accessory) {
@@ -240,5 +294,9 @@ class _BuddyPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _BuddyPainter old) =>
-      old.species != species || old.color != color || old.mood != mood || old.accessory != accessory;
+      old.species != species ||
+      old.color != color ||
+      old.mood != mood ||
+      old.accessory != accessory ||
+      old.outfit != outfit;
 }

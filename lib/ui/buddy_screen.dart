@@ -51,6 +51,7 @@ class _BuddyScreenState extends State<BuddyScreen> {
             color: color,
             mood: b.state.moodAt(b.clock()),
             accessory: b.state.accessory,
+            outfit: b.state.outfit,
             size: 140,
           ),
         ),
@@ -150,6 +151,23 @@ class _BuddyScreenState extends State<BuddyScreen> {
               onSelected: unlocked.contains(a) ? (_) => b.setAccessory(a) : null,
             ),
         ]),
+        const SizedBox(height: 16),
+        const Text('Clothes'),
+        Wrap(spacing: 8, children: [
+          ChoiceChip(
+            key: const Key('outfit-none'),
+            label: const Text('none'),
+            selected: b.state.outfit.isEmpty,
+            onSelected: (_) => b.setOutfit(''),
+          ),
+          for (final o in kOutfits)
+            ChoiceChip(
+              key: Key('outfit-$o'),
+              label: Text(b.unlockedOutfits.contains(o) ? o : '🔒 $o'),
+              selected: b.state.outfit == o,
+              onSelected: b.unlockedOutfits.contains(o) ? (_) => b.setOutfit(o) : null,
+            ),
+        ]),
         const Divider(height: 32),
         Text('Badges', style: Theme.of(context).textTheme.titleMedium),
         for (final badge in kBadges)
@@ -158,7 +176,11 @@ class _BuddyScreenState extends State<BuddyScreen> {
             leading: Text(b.earned.containsKey(badge.id) ? badge.emoji : '🔒',
                 style: const TextStyle(fontSize: 26)),
             title: Text(badge.title),
-            subtitle: Text(b.earned.containsKey(badge.id) ? 'Earned' : 'Locked: ${badge.how}'),
+            subtitle: Text(
+              '${b.earned.containsKey(badge.id) ? 'Earned' : 'Locked: ${badge.how}'}'
+              '${badge.outfit.isNotEmpty ? '  ·  unlocks ${badge.outfit}' : ''}'
+              '${badge.accessory.isNotEmpty ? '  ·  unlocks ${badge.accessory}' : ''}',
+            ),
           ),
       ]),
     );

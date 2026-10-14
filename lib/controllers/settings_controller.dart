@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import '../data/doc_store.dart';
+import '../domain/quotes.dart';
 import '../theme/terminology.dart';
 import '../theme/theme_config.dart';
 
@@ -69,8 +70,11 @@ class SettingsController extends ChangeNotifier {
   Terminology terminology = Terminology.standard();
   SystemProfile profile = const SystemProfile();
   HeadsUpPrefs headsUp = const HeadsUpPrefs();
+  QuotePrefs quotes = const QuotePrefs();
 
   Future<void> load() async {
+    final q = await _store.get(collection, 'quotes');
+    if (q != null) quotes = QuotePrefs.fromJson(q);
     final h = await _store.get(collection, 'headsup');
     if (h != null) headsUp = HeadsUpPrefs.fromJson(h);
     final t = await _store.get(collection, 'theme');
@@ -91,6 +95,12 @@ class SettingsController extends ChangeNotifier {
   Future<void> setTerminology(Terminology t) async {
     terminology = t;
     await _store.put(collection, t.toJson());
+    notifyListeners();
+  }
+
+  Future<void> setQuotes(QuotePrefs q) async {
+    quotes = q;
+    await _store.put(collection, q.toJson());
     notifyListeners();
   }
 

@@ -1,6 +1,16 @@
 import 'little.dart';
 
-enum BuddyAction { feed, play, cuddle }
+enum BuddyAction { feed, snack, walk, play, cuddle, pet, wash }
+
+const Map<BuddyAction, String> kBuddyActionLabels = {
+  BuddyAction.feed: '🍎 Feed',
+  BuddyAction.snack: '🍪 Snack',
+  BuddyAction.walk: '🦮 Walk',
+  BuddyAction.play: '🎈 Play',
+  BuddyAction.cuddle: '💜 Cuddle',
+  BuddyAction.pet: '🤚 Pet',
+  BuddyAction.wash: '🛁 Wash',
+};
 
 enum BuddyMood { happy, content, sleepy }
 
@@ -43,8 +53,10 @@ class BuddyState {
     this.passedAt,
     this.generation = 1,
     this.memorial = const [],
+    this.outfit = '',
   });
 
+  final String outfit;
   final bool classic;
   final DateTime? lastSeen;
   final DateTime? passedAt;
@@ -78,8 +90,10 @@ class BuddyState {
     bool clearPassed = false,
     int? generation,
     List<BuddyMemorial>? memorial,
+    String? outfit,
   }) =>
       BuddyState(
+        outfit: outfit ?? this.outfit,
         name: name ?? this.name,
         species: species ?? this.species,
         accessory: accessory ?? this.accessory,
@@ -139,6 +153,7 @@ class BuddyState {
         careCount: careCount,
         generation: generation + 1,
         memorial: memorial,
+        outfit: outfit,
         lastSeen: now,
         updatedAt: now,
       );
@@ -181,11 +196,21 @@ class BuddyState {
       case BuddyAction.feed:
         tummy = cap(tummy + 25);
         joy = cap(joy + 5);
+      case BuddyAction.snack:
+        tummy = cap(tummy + 10);
+        joy = cap(joy + 8);
+      case BuddyAction.walk:
+        joy = cap(joy + 15);
+        tummy = lower(tummy);
       case BuddyAction.play:
         joy = cap(joy + 20);
         tummy = lower(tummy);
       case BuddyAction.cuddle:
         joy = cap(joy + 12);
+      case BuddyAction.pet:
+        joy = cap(joy + 8);
+      case BuddyAction.wash:
+        joy = cap(joy + 10);
     }
     return s.copyWith(
       joy: joy,
@@ -219,6 +244,7 @@ class BuddyState {
         'passedAt': passedAt?.toIso8601String(),
         'generation': generation,
         'memorial': [for (final m in memorial) m.toJson()],
+        'outfit': outfit,
       };
 
   factory BuddyState.fromJson(Map<String, dynamic> j) => BuddyState(
@@ -238,6 +264,7 @@ class BuddyState {
         lastSeen: j['lastSeen'] == null ? null : DateTime.parse(j['lastSeen'] as String),
         passedAt: j['passedAt'] == null ? null : DateTime.parse(j['passedAt'] as String),
         generation: j['generation'] as int? ?? 1,
+        outfit: j['outfit'] as String? ?? '',
         memorial: [
           for (final m in (j['memorial'] as List? ?? const []))
             BuddyMemorial.fromJson(Map<String, dynamic>.from(m as Map)),

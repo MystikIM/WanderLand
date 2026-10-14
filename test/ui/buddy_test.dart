@@ -108,7 +108,7 @@ void main() {
 
     await e.buddy.refresh(alterCount: 1, history: []);
     await tester.pumpAndSettle();
-    expect(find.descendant(of: find.byKey(const Key('badge-first-alter')), matching: find.text('Earned')), findsOneWidget);
+    expect(find.descendant(of: find.byKey(const Key('badge-first-alter')), matching: find.textContaining('Earned')), findsOneWidget);
 
     await tester.ensureVisible(find.byKey(const Key('acc-bow')));
     await tester.tap(find.byKey(const Key('acc-bow')));
@@ -144,11 +144,14 @@ void main() {
     for (final sp in kBuddySpecies) {
       for (final mood in BuddyMood.values) {
         for (final acc in ['', ...kAccessories]) {
-          await tester.pumpWidget(MaterialApp(
-            home: Scaffold(
-              body: BuddyView(species: sp, color: Colors.purple, mood: mood, accessory: acc),
-            ),
-          ));
+          for (final outfit in ['', ...kOutfits]) {
+            await tester.pumpWidget(MaterialApp(
+              home: Scaffold(
+                body: BuddyView(
+                    species: sp, color: Colors.purple, mood: mood, accessory: acc, outfit: outfit),
+              ),
+            ));
+          }
         }
       }
     }

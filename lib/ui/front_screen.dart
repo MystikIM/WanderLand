@@ -11,6 +11,7 @@ import '../domain/models.dart';
 import 'alters_screen.dart' show AlterAvatar;
 import 'buddy_card.dart';
 import 'little_scope.dart';
+import 'quote_card.dart';
 import 'switch_sheet.dart';
 
 class FrontScreen extends StatelessWidget {
@@ -40,6 +41,7 @@ class FrontScreen extends StatelessWidget {
     return Scaffold(body: ListView(padding: const EdgeInsets.all(16), children: [
       Text(hello, style: Theme.of(context).textTheme.headlineSmall),
       const SizedBox(height: 16),
+      const QuoteCard(),
       Card(
         child: Padding(
           padding: const EdgeInsets.all(16),

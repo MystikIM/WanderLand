@@ -18,6 +18,14 @@ class BuddyController extends ChangeNotifier {
   int _days = 0;
 
   Set<String> get unlocked => accessoriesUnlockedBy(earned.keys);
+  Set<String> get unlockedOutfits => outfitsUnlockedBy(earned.keys);
+
+  Future<void> setOutfit(String o) async {
+    if (o.isNotEmpty && !unlockedOutfits.contains(o)) return;
+    state = state.copyWith(outfit: o);
+    await _saveState();
+    notifyListeners();
+  }
 
   Future<void> load() async {
     final b = await _store.get(collection, 'buddy');

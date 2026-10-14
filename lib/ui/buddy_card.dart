@@ -79,6 +79,7 @@ class BuddyCard extends StatelessWidget {
               color: color,
               mood: mood,
               accessory: b.state.accessory,
+              outfit: b.state.outfit,
               size: 96,
             ),
             const SizedBox(width: 12),
@@ -104,10 +105,9 @@ class BuddyCard extends StatelessWidget {
             ),
           ]),
           const SizedBox(height: 8),
-          Wrap(spacing: 8, children: [
-            act(BuddyAction.feed, 'buddy-feed', '🍎 Feed'),
-            act(BuddyAction.play, 'buddy-play', '🎈 Play'),
-            act(BuddyAction.cuddle, 'buddy-cuddle', '💜 Cuddle'),
+          Wrap(spacing: 8, runSpacing: 4, children: [
+            for (final a in BuddyAction.values)
+              act(a, 'buddy-${a.name}', kBuddyActionLabels[a]!),
           ]),
         ]),
       ),
