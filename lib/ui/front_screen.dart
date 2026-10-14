@@ -9,6 +9,7 @@ import '../domain/front_service.dart';
 import '../domain/little.dart';
 import '../domain/models.dart';
 import 'alters_screen.dart' show AlterAvatar;
+import 'buddy_card.dart';
 import 'little_scope.dart';
 import 'switch_sheet.dart';
 
@@ -55,6 +56,8 @@ class FrontScreen extends StatelessWidget {
           ]),
         ),
       ),
+      const SizedBox(height: 16),
+      const BuddyCard(),
       const SizedBox(height: 16),
       if (!hasAlters)
         Text(

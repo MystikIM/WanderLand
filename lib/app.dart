@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'app_info.dart';
 import 'controllers/alter_controller.dart';
+import 'controllers/buddy_controller.dart';
 import 'controllers/front_controller.dart';
 import 'controllers/settings_controller.dart';
 import 'data/doc_store.dart';
@@ -25,7 +26,25 @@ class _PluralAppState extends State<PluralApp> {
   late final AlterController alters = AlterController(widget.store)..load();
   late final ImageStore images = ImageStore(widget.docsDir);
   late final FrontController front = FrontController(widget.store)..load();
+  late final BuddyController buddy = BuddyController(widget.store)..load();
   // PROVIDERS: later tasks create their controllers here.
+
+  @override
+  void initState() {
+    super.initState();
+    alters.addListener(_syncBuddy);
+    front.addListener(_syncBuddy);
+  }
+
+  void _syncBuddy() =>
+      buddy.refresh(alterCount: alters.all.length, history: front.history);
+
+  @override
+  void dispose() {
+    alters.removeListener(_syncBuddy);
+    front.removeListener(_syncBuddy);
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -34,6 +53,7 @@ class _PluralAppState extends State<PluralApp> {
         ChangeNotifierProvider.value(value: widget.settings),
         ChangeNotifierProvider.value(value: alters),
         ChangeNotifierProvider.value(value: front),
+        ChangeNotifierProvider.value(value: buddy),
         Provider<ImageStore>.value(value: images),
         Provider<DocStore>.value(value: widget.store),
         Provider<Directory>.value(value: widget.docsDir),

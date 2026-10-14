@@ -1,0 +1,90 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../controllers/alter_controller.dart';
+import '../controllers/buddy_controller.dart';
+import '../controllers/front_controller.dart';
+import '../domain/buddy.dart';
+import '../domain/little.dart';
+import 'buddy_screen.dart';
+import 'buddy_view.dart';
+
+class BuddyCard extends StatelessWidget {
+  const BuddyCard({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final b = context.watch<BuddyController>();
+    if (!b.state.enabled) return const SizedBox.shrink();
+    final alters = context.watch<AlterController>();
+    final front = context.watch<FrontController>();
+    final id = front.primaryId;
+    final alter = id == null ? null : alters.byId(id);
+    final now = b.clock();
+    final mood = b.state.moodAt(now);
+    final color = alter != null ? Color(alter.colorValue) : Theme.of(context).colorScheme.primary;
+    final greeting = buddyGreeting(alterName: alter?.name, mood: mood, level: littleLevelOf(alter));
+
+    Widget act(BuddyAction a, String key, String label) => FilledButton.tonal(
+          key: Key(key),
+          onPressed: b.state.canCare(a, now) ? () => b.care(a) : null,
+          child: Text(label),
+        );
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(children: [
+          for (final c in b.celebrations)
+            ListTile(
+              key: Key('celebrate-${c.id}'),
+              leading: Text(c.emoji, style: const TextStyle(fontSize: 28)),
+              title: Text('New badge: ${c.title}!'),
+              subtitle: Text(c.how),
+            ),
+          if (b.celebrations.isNotEmpty)
+            TextButton(
+              key: const Key('celebrate-ok'),
+              onPressed: b.dismissCelebrations,
+              child: const Text('Yay! 🎉'),
+            ),
+          Row(children: [
+            BuddyView(
+              species: b.state.species,
+              color: color,
+              mood: mood,
+              accessory: b.state.accessory,
+              size: 96,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(greeting, style: Theme.of(context).textTheme.titleMedium),
+                Text(b.state.name, style: Theme.of(context).textTheme.bodySmall),
+              ]),
+            ),
+            PopupMenuButton<String>(
+              onSelected: (v) {
+                if (v == 'hide') {
+                  b.setEnabled(false);
+                } else {
+                  Navigator.of(context)
+                      .push(MaterialPageRoute(builder: (_) => const BuddyScreen()));
+                }
+              },
+              itemBuilder: (_) => const [
+                PopupMenuItem(value: 'open', child: Text('Buddy & badges')),
+                PopupMenuItem(value: 'hide', child: Text('Hide my buddy')),
+              ],
+            ),
+          ]),
+          const SizedBox(height: 8),
+          Wrap(spacing: 8, children: [
+            act(BuddyAction.feed, 'buddy-feed', '🍎 Feed'),
+            act(BuddyAction.play, 'buddy-play', '🎈 Play'),
+            act(BuddyAction.cuddle, 'buddy-cuddle', '💜 Cuddle'),
+          ]),
+        ]),
+      ),
+    );
+  }
+}

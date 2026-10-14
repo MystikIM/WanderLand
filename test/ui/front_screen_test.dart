@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:plural_app/app_links.dart';
 import 'package:plural_app/controllers/alter_controller.dart';
+import 'package:plural_app/controllers/buddy_controller.dart';
 import 'package:plural_app/controllers/front_controller.dart';
 import 'package:plural_app/controllers/settings_controller.dart';
 import 'package:plural_app/data/doc_store.dart';
@@ -16,15 +17,17 @@ import 'package:provider/single_child_widget.dart';
 import '../helpers/harness.dart';
 
 class Env {
-  Env(this.store, this.settings, this.alters, this.front);
+  Env(this.store, this.settings, this.alters, this.front, this.buddy);
   final MemoryDocStore store;
   final SettingsController settings;
   final AlterController alters;
   final FrontController front;
+  final BuddyController buddy;
   List<SingleChildWidget> get providers => [
         ChangeNotifierProvider.value(value: settings),
         ChangeNotifierProvider.value(value: alters),
         ChangeNotifierProvider.value(value: front),
+        ChangeNotifierProvider.value(value: buddy),
         Provider.value(value: ImageStore(Directory.systemTemp)),
         Provider<DocStore>.value(value: store),
         Provider<Directory>.value(value: Directory.systemTemp),
@@ -39,7 +42,9 @@ Future<Env> makeEnv({DateTime? now}) async {
   await a.load();
   final f = FrontController(store, clock: () => now ?? DateTime(2026, 10, 14, 18, 30));
   await f.load();
-  return Env(store, s, a, f);
+  final b = BuddyController(store, clock: () => now ?? DateTime(2026, 10, 14, 18, 30));
+  await b.load();
+  return Env(store, s, a, f, b);
 }
 
 void main() {

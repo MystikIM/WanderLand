@@ -7,6 +7,7 @@ import '../controllers/settings_controller.dart';
 import '../data/doc_store.dart';
 import '../theme/font_service.dart';
 import 'appearance_screen.dart';
+import 'buddy_screen.dart';
 
 class MoreScreen extends StatelessWidget {
   const MoreScreen({super.key});
@@ -49,6 +50,13 @@ class MoreScreen extends StatelessWidget {
             ),
           ));
         },
+      ),
+      ListTile(
+        leading: const Icon(Icons.pets),
+        title: const Text('Buddy & badges'),
+        subtitle: const Text('Your little companion and what you have earned'),
+        onTap: () => Navigator.of(context)
+            .push(MaterialPageRoute(builder: (_) => const BuddyScreen())),
       ),
       // MORE-TILES: Journal (Task 13), Backup (Task 15) go here.
       ListTile(
