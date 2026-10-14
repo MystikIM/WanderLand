@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../controllers/settings_controller.dart';
+import 'alters_screen.dart';
 import 'coming_soon.dart';
 import 'more_screen.dart';
 
@@ -12,7 +13,7 @@ class HomeShell extends StatefulWidget {
   static List<Widget Function()> tabs = [
     () => const ComingSoon('Front'),
     () => const ComingSoon('Activity'),
-    () => const ComingSoon('Alters'),
+    () => const AltersScreen(),
     () => const ComingSoon('Inner World'),
     () => const ComingSoon('Chat'),
     () => const MoreScreen(),
