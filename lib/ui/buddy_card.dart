@@ -19,6 +19,32 @@ class BuddyCard extends StatelessWidget {
     final front = context.watch<FrontController>();
     final id = front.primaryId;
     final alter = id == null ? null : alters.byId(id);
+    if (b.state.isPassed) {
+      final soft = littleLevelOf(alter) != LittleLevel.none;
+      return Card(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(children: [
+            Text(soft ? '⭐' : '💫', style: const TextStyle(fontSize: 40)),
+            const SizedBox(height: 8),
+            Text(
+              soft
+                  ? '${b.state.name} went on a long trip to the stars. ⭐'
+                  : '${b.state.name} has passed away.',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            if (!soft) const Text('Thank you for taking care of them. 💜', textAlign: TextAlign.center),
+            const SizedBox(height: 12),
+            FilledButton(
+              key: const Key('buddy-hatch'),
+              onPressed: b.hatchNew,
+              child: const Text('Hatch a new egg 🥚'),
+            ),
+          ]),
+        ),
+      );
+    }
     final now = b.clock();
     final mood = b.state.moodAt(now);
     final color = alter != null ? Color(alter.colorValue) : Theme.of(context).colorScheme.primary;

@@ -9,6 +9,23 @@ const List<String> kBuddySpecies = [
 ];
 const Duration kBuddyCooldown = Duration(minutes: 5);
 const double kBuddyFloor = 30;
+const Duration kClassicAway = Duration(days: 7);
+
+class BuddyMemorial {
+  const BuddyMemorial({required this.name, required this.species, required this.passedAt});
+  final String name;
+  final String species;
+  final DateTime passedAt;
+
+  Map<String, dynamic> toJson() =>
+      {'name': name, 'species': species, 'passedAt': passedAt.toIso8601String()};
+
+  factory BuddyMemorial.fromJson(Map<String, dynamic> j) => BuddyMemorial(
+        name: j['name'] as String? ?? 'Buddy',
+        species: j['species'] as String? ?? 'blob',
+        passedAt: DateTime.parse(j['passedAt'] as String),
+      );
+}
 
 class BuddyState {
   const BuddyState({
@@ -21,7 +38,19 @@ class BuddyState {
     this.careCount = 0,
     this.lastCare = const {},
     this.updatedAt,
+    this.classic = false,
+    this.lastSeen,
+    this.passedAt,
+    this.generation = 1,
+    this.memorial = const [],
   });
+
+  final bool classic;
+  final DateTime? lastSeen;
+  final DateTime? passedAt;
+  final int generation;
+  final List<BuddyMemorial> memorial;
+  bool get isPassed => passedAt != null;
 
   final String name;
   final String species;
@@ -43,6 +72,12 @@ class BuddyState {
     int? careCount,
     Map<String, DateTime>? lastCare,
     DateTime? updatedAt,
+    bool? classic,
+    DateTime? lastSeen,
+    DateTime? passedAt,
+    bool clearPassed = false,
+    int? generation,
+    List<BuddyMemorial>? memorial,
   }) =>
       BuddyState(
         name: name ?? this.name,
@@ -54,23 +89,82 @@ class BuddyState {
         careCount: careCount ?? this.careCount,
         lastCare: lastCare ?? this.lastCare,
         updatedAt: updatedAt ?? this.updatedAt,
+        classic: classic ?? this.classic,
+        lastSeen: lastSeen ?? this.lastSeen,
+        passedAt: clearPassed ? null : (passedAt ?? this.passedAt),
+        generation: generation ?? this.generation,
+        memorial: memorial ?? this.memorial,
       );
 
-  static double _drift(double v, double drop) {
-    if (v <= kBuddyFloor) return v;
-    return (v - drop) < kBuddyFloor ? kBuddyFloor : v - drop;
+  static double _drift(double v, double drop, double floor) {
+    if (v <= floor) return v;
+    return (v - drop) < floor ? floor : v - drop;
   }
 
-  /// Let time pass. Numbers only ever drift down to a gentle floor, never below.
+  /// Let time pass. Numbers only ever drift down to a gentle floor, never below
+  /// (classic mode removes the floor).
   BuddyState settle(DateTime now) {
     final since = updatedAt;
     if (since == null) return copyWith(updatedAt: now);
     if (!now.isAfter(since)) return this;
     final hours = now.difference(since).inMinutes / 60.0;
-    return copyWith(joy: _drift(joy, hours), tummy: _drift(tummy, hours * 2), updatedAt: now);
+    final floor = classic ? 0.0 : kBuddyFloor;
+    return copyWith(
+      joy: _drift(joy, hours, floor),
+      tummy: _drift(tummy, hours * 2, floor),
+      updatedAt: now,
+    );
+  }
+
+  /// Call when the app opens or the buddy is cared for. In classic mode, being
+  /// away for 7 days means the buddy has passed.
+  BuddyState visit(DateTime now) {
+    if (isPassed) return this;
+    final seen = lastSeen;
+    if (classic && seen != null && now.difference(seen) >= kClassicAway) {
+      final when = seen.add(kClassicAway);
+      return copyWith(
+        passedAt: when,
+        memorial: [...memorial, BuddyMemorial(name: name, species: species, passedAt: when)],
+      );
+    }
+    return copyWith(lastSeen: now);
+  }
+
+  BuddyState hatchNew(DateTime now) => BuddyState(
+        species: species,
+        accessory: accessory,
+        enabled: enabled,
+        classic: classic,
+        careCount: careCount,
+        generation: generation + 1,
+        memorial: memorial,
+        lastSeen: now,
+        updatedAt: now,
+      );
+
+  BuddyState withClassic(bool on, DateTime now) {
+    if (on) return copyWith(classic: true, lastSeen: now);
+    if (isPassed) {
+      return copyWith(
+        classic: false,
+        clearPassed: true,
+        joy: 60,
+        tummy: 60,
+        memorial: memorial.isEmpty ? memorial : memorial.sublist(0, memorial.length - 1),
+        lastSeen: now,
+        updatedAt: now,
+      );
+    }
+    return copyWith(
+      classic: false,
+      joy: joy < kBuddyFloor ? kBuddyFloor : joy,
+      tummy: tummy < kBuddyFloor ? kBuddyFloor : tummy,
+    );
   }
 
   bool canCare(BuddyAction a, DateTime now) {
+    if (isPassed) return false;
     final last = lastCare[a.name];
     if (last == null || now.isBefore(last)) return true;
     return now.difference(last) >= kBuddyCooldown;
@@ -120,6 +214,11 @@ class BuddyState {
         'careCount': careCount,
         'lastCare': {for (final e in lastCare.entries) e.key: e.value.toIso8601String()},
         'updatedAt': updatedAt?.toIso8601String(),
+        'classic': classic,
+        'lastSeen': lastSeen?.toIso8601String(),
+        'passedAt': passedAt?.toIso8601String(),
+        'generation': generation,
+        'memorial': [for (final m in memorial) m.toJson()],
       };
 
   factory BuddyState.fromJson(Map<String, dynamic> j) => BuddyState(
@@ -135,6 +234,14 @@ class BuddyState {
             e.key as String: DateTime.parse(e.value as String),
         },
         updatedAt: j['updatedAt'] == null ? null : DateTime.parse(j['updatedAt'] as String),
+        classic: j['classic'] as bool? ?? false,
+        lastSeen: j['lastSeen'] == null ? null : DateTime.parse(j['lastSeen'] as String),
+        passedAt: j['passedAt'] == null ? null : DateTime.parse(j['passedAt'] as String),
+        generation: j['generation'] as int? ?? 1,
+        memorial: [
+          for (final m in (j['memorial'] as List? ?? const []))
+            BuddyMemorial.fromJson(Map<String, dynamic>.from(m as Map)),
+        ],
       );
 }
 

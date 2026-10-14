@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:plural_app/controllers/alter_controller.dart';
 import 'package:plural_app/controllers/buddy_controller.dart';
 import 'package:plural_app/controllers/front_controller.dart';
+import 'package:plural_app/controllers/settings_controller.dart';
 import 'package:plural_app/data/doc_store.dart';
 import 'package:plural_app/domain/buddy.dart';
 import 'package:plural_app/domain/rewards.dart';
@@ -14,7 +15,8 @@ import 'package:provider/single_child_widget.dart';
 import '../helpers/harness.dart';
 
 class E {
-  E(this.alters, this.front, this.buddy);
+  E(this.alters, this.front, this.buddy, this.settings);
+  final SettingsController settings;
   final AlterController alters;
   final FrontController front;
   final BuddyController buddy;
@@ -22,6 +24,7 @@ class E {
         ChangeNotifierProvider.value(value: alters),
         ChangeNotifierProvider.value(value: front),
         ChangeNotifierProvider.value(value: buddy),
+        ChangeNotifierProvider.value(value: settings),
       ];
 }
 
@@ -34,7 +37,9 @@ Future<E> make() async {
   await f.load();
   final b = BuddyController(store, clock: () => now);
   await b.load();
-  return E(a, f, b);
+  final s = SettingsController(store);
+  await s.load();
+  return E(a, f, b, s);
 }
 
 void main() {

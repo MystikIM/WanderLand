@@ -22,7 +22,7 @@ class PluralApp extends StatefulWidget {
   State<PluralApp> createState() => _PluralAppState();
 }
 
-class _PluralAppState extends State<PluralApp> {
+class _PluralAppState extends State<PluralApp> with WidgetsBindingObserver {
   late final AlterController alters = AlterController(widget.store)..load();
   late final ImageStore images = ImageStore(widget.docsDir);
   late final FrontController front = FrontController(widget.store)..load();
@@ -32,8 +32,14 @@ class _PluralAppState extends State<PluralApp> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     alters.addListener(_syncBuddy);
     front.addListener(_syncBuddy);
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) buddy.visit();
   }
 
   void _syncBuddy() =>
@@ -41,6 +47,7 @@ class _PluralAppState extends State<PluralApp> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     alters.removeListener(_syncBuddy);
     front.removeListener(_syncBuddy);
     super.dispose();

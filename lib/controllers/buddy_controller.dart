@@ -22,7 +22,12 @@ class BuddyController extends ChangeNotifier {
   Future<void> load() async {
     final b = await _store.get(collection, 'buddy');
     if (b != null) state = BuddyState.fromJson(b);
-    state = state.settle(clock());
+    final now = clock();
+    state = state.settle(now);
+    final visited = state.visit(now);
+    final changed = visited.passedAt != state.passedAt || visited.lastSeen != state.lastSeen;
+    state = visited;
+    if (changed && b != null) await _saveState();
     final r = await _store.get(collection, 'rewards');
     if (r != null) {
       earned = {
@@ -49,12 +54,42 @@ class BuddyController extends ChangeNotifier {
 
   Future<bool> care(BuddyAction a) async {
     final now = clock();
-    if (!state.canCare(a, now)) return false;
-    state = state.care(a, now);
+    final visited = state.visit(now);
+    if (!visited.canCare(a, now)) {
+      if (visited.isPassed && !state.isPassed) {
+        state = visited;
+        await _saveState();
+        notifyListeners();
+      }
+      return false;
+    }
+    state = visited.care(a, now);
     await _saveState();
     await _evaluate();
     notifyListeners();
     return true;
+  }
+
+  /// Called when the app comes back to the foreground.
+  Future<void> visit() async {
+    final before = state;
+    state = state.settle(clock()).visit(clock());
+    if (state.passedAt != before.passedAt || state.lastSeen != before.lastSeen) {
+      await _saveState();
+    }
+    notifyListeners();
+  }
+
+  Future<void> setClassic(bool on) async {
+    state = state.withClassic(on, clock());
+    await _saveState();
+    notifyListeners();
+  }
+
+  Future<void> hatchNew() async {
+    state = state.hatchNew(clock());
+    await _saveState();
+    notifyListeners();
   }
 
   Future<void> _evaluate() async {
