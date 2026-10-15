@@ -53,3 +53,6 @@ sqlite3.dll
 
 # release output
 dist/
+
+# internal planning notes (kept locally, not published)
+docs/superpowers/
