@@ -17,6 +17,10 @@ abstract class FriendTransport {
 
   Future<void> listenOn(String mailbox);
   Future<void> forget(String mailbox);
+
+  /// Stop listening AND throw away whatever is waiting in that mailbox on the relay.
+  /// Used when a friend is blocked or removed. Plain [forget] keeps waiting mail.
+  Future<void> drop(String mailbox);
 }
 
 /// What the app uses until a real transport exists: nothing leaves the phone.
@@ -29,4 +33,6 @@ class OfflineTransport implements FriendTransport {
   Future<void> listenOn(String mailbox) async {}
   @override
   Future<void> forget(String mailbox) async {}
+  @override
+  Future<void> drop(String mailbox) async {}
 }

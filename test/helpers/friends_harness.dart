@@ -48,6 +48,13 @@ class MemoryTransport implements FriendTransport {
   final StreamController<Envelope> _ctl = StreamController<Envelope>.broadcast(sync: true);
   bool _reachable = true;
   final Set<String> listening = {};
+  final List<String> drops = [];
+
+  @override
+  Future<void> drop(String mailbox) async {
+    drops.add(mailbox);
+    await forget(mailbox);
+  }
 
   bool get reachable => _reachable;
   set reachable(bool v) {

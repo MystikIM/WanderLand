@@ -402,7 +402,7 @@ class FriendsController extends ChangeNotifier {
   }
 
   Future<void> _removeFriendData(Friend f) async {
-    await _transport.forget(f.inbox);
+    await _transport.drop(f.inbox);
     await _dropOutbox(f.id);
     await _store.delete(friendsCollection, f.id);
     friends = [for (final x in friends) if (x.id != f.id) x];
@@ -603,7 +603,7 @@ class FriendsController extends ChangeNotifier {
   Future<void> _block(String friendId) async {
     final f = _friend(friendId);
     if (f == null) throw StateError('That friend is gone.');
-    await _transport.forget(f.inbox);
+    await _transport.drop(f.inbox);
     await _dropOutbox(f.id);
     await _putFriend(f.copyWith(state: FriendState.blocked, clearFront: true));
     notifyListeners();
