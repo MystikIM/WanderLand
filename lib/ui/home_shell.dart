@@ -5,14 +5,18 @@ import '../app_links.dart';
 import 'activity_screen.dart';
 import 'alters_screen.dart';
 import 'chat_screen.dart';
+import 'dedication.dart';
 import 'front_screen.dart';
 import 'more_screen.dart';
 import 'switch_sheet.dart';
 import 'world_screen.dart';
 
 class HomeShell extends StatefulWidget {
-  const HomeShell({super.key, this.initialTab = 0});
+  const HomeShell({super.key, this.initialTab = 0, this.showDedication = false});
   final int initialTab;
+
+  /// The real app turns this on: the dedication shows once, then never again.
+  final bool showDedication;
 
   /// Tab bodies in bottom-bar order. Tabs built in later tasks replace ComingSoon.
   static List<Widget Function()> tabs = [
@@ -35,6 +39,13 @@ class _HomeShellState extends State<HomeShell> {
   void initState() {
     super.initState();
     DeepLinks.switchRequests.addListener(_onSwitchRequest);
+    if (widget.showDedication) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        final s = context.read<SettingsController>();
+        if (s.profile.onboarded && !s.profile.dedicationSeen) showDedicationDialog(context);
+      });
+    }
   }
 
   @override

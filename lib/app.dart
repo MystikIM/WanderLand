@@ -141,7 +141,7 @@ class _PluralAppState extends State<PluralApp> with WidgetsBindingObserver {
               data: MediaQuery.of(ctx).copyWith(textScaler: TextScaler.linear(cfg.fontScale)),
               child: child!,
             ),
-            home: s.profile.onboarded ? const HomeShell() : const OnboardingScreen(),
+            home: s.profile.onboarded ? const HomeShell(showDedication: true) : const OnboardingScreen(),
           );
         },
       ),

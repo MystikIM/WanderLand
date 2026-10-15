@@ -11,23 +11,27 @@ class SystemProfile {
     this.greeting = '',
     this.onboarded = false,
     this.littleGuard = true,
+    this.dedicationSeen = false,
   });
   final String systemName;
   final String greeting;
   final bool onboarded;
   final bool littleGuard;
+  final bool dedicationSeen;
 
   SystemProfile copyWith({
     String? systemName,
     String? greeting,
     bool? onboarded,
     bool? littleGuard,
+    bool? dedicationSeen,
   }) =>
       SystemProfile(
         systemName: systemName ?? this.systemName,
         greeting: greeting ?? this.greeting,
         onboarded: onboarded ?? this.onboarded,
         littleGuard: littleGuard ?? this.littleGuard,
+        dedicationSeen: dedicationSeen ?? this.dedicationSeen,
       );
 
   Map<String, dynamic> toJson() => {
@@ -36,6 +40,7 @@ class SystemProfile {
         'greeting': greeting,
         'onboarded': onboarded,
         'littleGuard': littleGuard,
+        'dedicationSeen': dedicationSeen,
       };
 
   factory SystemProfile.fromJson(Map<String, dynamic> j) => SystemProfile(
@@ -43,6 +48,7 @@ class SystemProfile {
         greeting: j['greeting'] as String? ?? '',
         onboarded: j['onboarded'] as bool? ?? false,
         littleGuard: j['littleGuard'] as bool? ?? true,
+        dedicationSeen: j['dedicationSeen'] as bool? ?? false,
       );
 }
 

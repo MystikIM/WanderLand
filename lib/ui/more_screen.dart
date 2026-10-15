@@ -2,7 +2,6 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../app_info.dart';
 import '../controllers/settings_controller.dart';
 import '../data/doc_store.dart';
 import '../theme/font_service.dart';
@@ -10,6 +9,7 @@ import 'appearance_screen.dart';
 import '../domain/little.dart';
 import 'backup_screen.dart';
 import 'buddy_screen.dart';
+import 'dedication.dart';
 import 'journal_screen.dart';
 import 'little_scope.dart';
 import 'notifications_screen.dart';
@@ -87,11 +87,9 @@ class MoreScreen extends StatelessWidget {
       ListTile(
         leading: const Icon(Icons.info_outline),
         title: const Text('About'),
-        onTap: () => showAboutDialog(
-          context: context,
-          applicationName: appName,
-          applicationLegalese: '$appTagline\nMade with care by MystikIM',
-        ),
+        subtitle: const Text('The dedication, and who made this'),
+        onTap: () => Navigator.of(context)
+            .push(MaterialPageRoute(builder: (_) => const DedicationScreen())),
       ),
     ]);
   }
