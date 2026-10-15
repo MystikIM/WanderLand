@@ -115,9 +115,9 @@ void main() {
 
   test('while a little is out, only a grown-up can change sharing or the littles tick; muting stays open', () async {
     a.little = true;
-    expect(() => a.c.setShareFront(aFriend, true), throwsA(isA<StateError>()));
-    expect(() => a.c.setAllowedAlters(aFriend, ['a1']), throwsA(isA<StateError>()));
-    expect(() => a.c.setLittleOk(aFriend, true), throwsA(isA<StateError>()));
+    await expectLater(() => a.c.setShareFront(aFriend, true), throwsA(isA<StateError>()));
+    await expectLater(() => a.c.setAllowedAlters(aFriend, ['a1']), throwsA(isA<StateError>()));
+    await expectLater(() => a.c.setLittleOk(aFriend, true), throwsA(isA<StateError>()));
     await a.c.setMuted(aFriend, true);
     expect(a.c.friends.single.muted, isTrue);
     expect(a.c.friends.single.shareFront, isFalse);

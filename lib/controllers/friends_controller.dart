@@ -559,6 +559,35 @@ class FriendsController extends ChangeNotifier {
         theirFront: TheirFront(alters: alters, someoneOut: m['some'] == true || out.length > alters.length)));
   }
 
+  // ---- safety -----------------------------------------------------------
+
+  /// Silent. Their mail is dropped, nothing more is sent to them, and they are not told.
+  Future<void> block(String friendId) => _exclusive(() => _block(friendId));
+
+  Future<void> _block(String friendId) async {
+    final f = _friend(friendId);
+    if (f == null) throw StateError('That friend is gone.');
+    await _transport.forget(f.inbox);
+    await _dropOutbox(f.id);
+    await _putFriend(f.copyWith(state: FriendState.blocked, clearFront: true));
+    notifyListeners();
+  }
+
+  /// Forgets the friend, the chat and anything waiting. They can be added again later.
+  Future<void> removeFriend(String friendId) => _exclusive(() => _removeFriend(friendId));
+
+  Future<void> _removeFriend(String friendId) async {
+    _grownUpOnly('remove friends');
+    final f = _friend(friendId);
+    if (f == null) return;
+    await _removeFriendData(f);
+    for (final m in _messages.where((m) => m.friendId == friendId).toList()) {
+      await _store.delete(messagesCollection, m.id);
+    }
+    _messages = [for (final m in _messages) if (m.friendId != friendId) m];
+    notifyListeners();
+  }
+
   // ---- receiving --------------------------------------------------------
 
   Future<void> _handle(Envelope e) async {
