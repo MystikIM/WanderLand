@@ -53,6 +53,8 @@ dependencies:
   flutter_secure_storage: 11.2.0
 
 dev_dependencies:
+  wanderland_relay:
+    path: relay
   flutter_test:
     sdk: flutter
 

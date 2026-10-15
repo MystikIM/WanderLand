@@ -997,6 +997,13 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "15.3.0"
+  wanderland_relay:
+    dependency: "direct dev"
+    description:
+      path: relay
+      relative: true
+    source: path
+    version: "0.1.0"
   web:
     dependency: transitive
     description:

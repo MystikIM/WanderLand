@@ -1,0 +1,7 @@
+name: wanderland_relay
+description: Tiny mailbox relay for WanderLand friend chat. Holds sealed bytes, reads nothing.
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: ^3.13.5
