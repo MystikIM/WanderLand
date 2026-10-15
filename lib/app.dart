@@ -22,9 +22,13 @@ import 'controllers/settings_controller.dart';
 import 'data/doc_store.dart';
 import 'data/image_store.dart';
 import 'domain/little.dart';
+import 'domain/models.dart';
 import 'theme/theme_config.dart';
 import 'ui/home_shell.dart';
 import 'ui/onboarding_screen.dart';
+import 'controllers/friends_controller.dart';
+import 'friends/secret_store.dart';
+import 'friends/transport.dart';
 
 class PluralApp extends StatefulWidget {
   const PluralApp({super.key, required this.store, required this.docsDir, required this.settings});
@@ -42,6 +46,33 @@ class _PluralAppState extends State<PluralApp> with WidgetsBindingObserver {
   late final BuddyController buddy = BuddyController(widget.store)..load();
   late final JournalController journal = JournalController(widget.store)..load();
   late final ChatController chat = ChatController(widget.store)..load();
+  // Friend chat is built but switched off, and the app has no transport yet, so
+  // nothing can leave the phone. Pieces 2 and 3 plug a real transport in here.
+  late final FriendsController friends = FriendsController(
+    store: widget.store,
+    secrets: SecureSecretStore(),
+    transport: OfflineTransport(),
+    frontOut: _frontOut,
+    alterById: alters.byId,
+    littleLocked: _littleLocked,
+  )..load();
+
+  List<Alter> _frontOut() {
+    final entries = [...front.current]
+      ..sort((a, b) => (a.tier == FrontTier.primary ? 0 : 1).compareTo(b.tier == FrontTier.primary ? 0 : 1));
+    return [
+      for (final e in entries)
+        if (alters.byId(e.alterId) != null) alters.byId(e.alterId)!,
+    ];
+  }
+
+  bool _littleLocked() {
+    final id = front.primaryId;
+    final a = id == null ? null : alters.byId(id);
+    return !riskyActionsAllowed(littleLevelOf(a), guardOn: widget.settings.profile.littleGuard);
+  }
+
+  void _publishFront() => friends.publishFront();
   late final WorldController world = WorldController(
     widget.store,
     names: () => [for (final a in alters.all) NameRef(a.id, a.name)],
@@ -55,6 +86,7 @@ class _PluralAppState extends State<PluralApp> with WidgetsBindingObserver {
     await front.load();
     await journal.load();
     await chat.load();
+    await friends.load();
     await world.load();
     await buddy.load();
     await FontService(widget.store, widget.docsDir).loadSaved();
@@ -83,6 +115,7 @@ class _PluralAppState extends State<PluralApp> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     alters.addListener(_syncBuddy);
     front.addListener(_syncBuddy);
+    front.addListener(_publishFront);
     notifySync.start(); // fire and forget; must not block startup
     quickAccess.start();
   }
@@ -102,6 +135,8 @@ class _PluralAppState extends State<PluralApp> with WidgetsBindingObserver {
     quickAccess.dispose();
     alters.removeListener(_syncBuddy);
     front.removeListener(_syncBuddy);
+    front.removeListener(_publishFront);
+    friends.dispose();
     super.dispose();
   }
 
@@ -115,6 +150,7 @@ class _PluralAppState extends State<PluralApp> with WidgetsBindingObserver {
         ChangeNotifierProvider.value(value: buddy),
         ChangeNotifierProvider.value(value: journal),
         ChangeNotifierProvider.value(value: chat),
+        ChangeNotifierProvider.value(value: friends),
         ChangeNotifierProvider.value(value: world),
         Provider<PinLock>.value(value: pinLock),
         Provider<BackupApi>.value(value: backup),
