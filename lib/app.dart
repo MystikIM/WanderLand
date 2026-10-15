@@ -28,7 +28,8 @@ import 'ui/home_shell.dart';
 import 'ui/onboarding_screen.dart';
 import 'controllers/friends_controller.dart';
 import 'friends/secret_store.dart';
-import 'friends/transport.dart';
+import 'friends/relay_config.dart';
+import 'friends/relay_transport.dart';
 
 class PluralApp extends StatefulWidget {
   const PluralApp({super.key, required this.store, required this.docsDir, required this.settings});
@@ -46,12 +47,12 @@ class _PluralAppState extends State<PluralApp> with WidgetsBindingObserver {
   late final BuddyController buddy = BuddyController(widget.store)..load();
   late final JournalController journal = JournalController(widget.store)..load();
   late final ChatController chat = ChatController(widget.store)..load();
-  // Friend chat is built but switched off, and the app has no transport yet, so
-  // nothing can leave the phone. Pieces 2 and 3 plug a real transport in here.
+  // Friend chat is built but switched off: nothing connects until chat is turned on.
+  late final RelayTransport relay = RelayTransport(Uri.parse(kRelayUrl));
   late final FriendsController friends = FriendsController(
     store: widget.store,
     secrets: SecureSecretStore(),
-    transport: OfflineTransport(),
+    transport: relay,
     frontOut: _frontOut,
     alterById: alters.byId,
     littleLocked: _littleLocked,
@@ -137,6 +138,7 @@ class _PluralAppState extends State<PluralApp> with WidgetsBindingObserver {
     front.removeListener(_syncBuddy);
     front.removeListener(_publishFront);
     friends.dispose();
+    relay.close();
     super.dispose();
   }
 
