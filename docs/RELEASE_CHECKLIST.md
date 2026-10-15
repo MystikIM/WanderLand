@@ -50,3 +50,18 @@ written here.
       the website host limits single files to about 25 MB)
 - [ ] Website page checked on a preview, then shipped
 - [ ] Phone checklist above run, results updated here and on the build page
+
+## Before publishing a build with friend chat (blocks the next release)
+
+The table above is the truth for v0.1.3, which has no internet permission. A build with
+friend chat has the internet permission, so these must be done first:
+
+| # | Item | Status | Note |
+|---|------|--------|------|
+| B1 | The website and README no longer say "no internet permission" / "nothing leaves your phone", and the site has a plain "How friend chat works" section (scrambled end to end, relay sees only size and time, off by default, only people you add, block, no forward secrecy yet) | NOT DONE | blocks release |
+| B2 | Release notes say chat uses the internet only after it is switched on, and list the exact permission list of the APK (checked with aapt) | NOT DONE | blocks release |
+| B3 | Relay is running and `https://chat.mystikim.com/v1/health` answers `ok` | PASS 2026-10-15 | home server box, Cloudflare Tunnel |
+| B4 | Live smoke test against the real relay passes (`RELAY_SMOKE=1 flutter test test/ui/friends/live_relay_smoke_test.dart`) | PASS 2026-10-15 | from the PC, two pretend phones |
+| B5 | Two REAL phones, different networks (one on home Wi-Fi, one on mobile data), become friends and chat both ways | NOT TESTED | needs a second Android phone |
+| B6 | Airplane mode: a message shows "Waiting to send", then sends when back online | NOT TESTED | |
+| B7 | Littles: with the guard on and a little out, cannot add or remove friends or change sharing; can chat only with friends marked okay | NOT TESTED | covered by widget tests only |
