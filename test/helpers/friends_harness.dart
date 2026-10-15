@@ -1,3 +1,7 @@
+import 'package:plural_app/controllers/friends_controller.dart';
+import 'package:plural_app/data/doc_store.dart';
+import 'package:plural_app/domain/models.dart';
+import 'package:plural_app/friends/secret_store.dart';
 import 'dart:async';
 import 'package:plural_app/friends/transport.dart';
 
@@ -75,5 +79,53 @@ class MemoryTransport implements FriendTransport {
   Future<void> forget(String mailbox) async {
     listening.remove(mailbox);
     _hub._release(mailbox, this);
+  }
+}
+/// One pretend phone: its own database, secret store, network port and controller.
+class Phone {
+  Phone(this.hub, {List<Alter>? withAlters, DateTime? start})
+      : alters = withAlters ?? <Alter>[],
+        now = start ?? DateTime(2026, 10, 15, 9) {
+    store = MemoryDocStore();
+    secrets = MemorySecretStore();
+    transport = hub.port();
+    c = _controller();
+  }
+
+  final MemoryHub hub;
+  final List<Alter> alters;
+  List<String> outIds = [];
+  bool little = false;
+  DateTime now;
+  late final MemoryDocStore store;
+  late final MemorySecretStore secrets;
+  late final MemoryTransport transport;
+  late FriendsController c;
+
+  FriendsController _controller() => FriendsController(
+        store: store,
+        secrets: secrets,
+        transport: transport,
+        frontOut: () => [for (final id in outIds) ...alters.where((a) => a.id == id)],
+        alterById: (id) => alters.where((a) => a.id == id).firstOrNull,
+        littleLocked: () => little,
+        // Every look at the clock moves it on a millisecond, so two things made
+        // "now" never share a timestamp and sort order is never a coin flip.
+        clock: () => now = now.add(const Duration(milliseconds: 1)),
+      );
+
+  /// A phone with chat switched on.
+  static Future<Phone> on(MemoryHub hub, {String username = 'zed', List<Alter>? withAlters}) async {
+    final p = Phone(hub, withAlters: withAlters);
+    await p.c.load();
+    await p.c.enable(username: username);
+    return p;
+  }
+
+  /// Pretend the app was closed and opened again: same database and secrets.
+  Future<void> restart() async {
+    c.dispose();
+    c = _controller();
+    await c.load();
   }
 }
