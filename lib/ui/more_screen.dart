@@ -10,6 +10,7 @@ import '../domain/little.dart';
 import 'backup_screen.dart';
 import 'buddy_screen.dart';
 import 'dedication.dart';
+import 'friends/friend_settings_screen.dart';
 import 'journal_screen.dart';
 import 'little_scope.dart';
 import 'notifications_screen.dart';
@@ -69,6 +70,14 @@ class MoreScreen extends StatelessWidget {
         subtitle: const Text('Who is out, lock screen privacy, check-in reminders'),
         onTap: () => Navigator.of(context)
             .push(MaterialPageRoute(builder: (_) => const NotificationsScreen())),
+      ),
+      ListTile(
+        key: const Key('more-friend-chat'),
+        leading: const Icon(Icons.people_outline),
+        title: const Text('Friend chat'),
+        subtitle: const Text('Turn it on or off, your username, start over'),
+        onTap: () => Navigator.of(context)
+            .push(MaterialPageRoute(builder: (_) => const FriendSettingsScreen())),
       ),
       ListTile(
         leading: const Icon(Icons.menu_book_outlined),
