@@ -62,6 +62,26 @@ class _HomeShellState extends State<HomeShell> {
     });
   }
 
+  /// The biggest label size (up to the normal 12) at which the widest label
+  /// fits inside one of the six tabs, in the app's current font and text scale.
+  double _fitLabelSize(BuildContext context, List<String> labels) {
+    const normal = 12.0, smallest = 8.5;
+    final tab = MediaQuery.sizeOf(context).width / labels.length - 8; // a little breathing room
+    final family = Theme.of(context).textTheme.labelMedium?.fontFamily;
+    final scaler = MediaQuery.textScalerOf(context);
+    var widest = 0.0;
+    for (final l in labels) {
+      final tp = TextPainter(
+        text: TextSpan(text: l, style: TextStyle(fontFamily: family, fontSize: normal, letterSpacing: -0.2)),
+        textDirection: TextDirection.ltr,
+        textScaler: scaler,
+      )..layout();
+      if (tp.width > widest) widest = tp.width;
+    }
+    if (widest <= tab) return normal;
+    return (normal * tab / widest).clamp(smallest, normal);
+  }
+
   @override
   Widget build(BuildContext context) {
     final t = context.watch<SettingsController>().terminology;
@@ -72,13 +92,22 @@ class _HomeShellState extends State<HomeShell> {
     final labels = ['Front', 'Activity', t.cap('alters'), 'Inner World', 'Chat', 'More'];
     return Scaffold(
       body: SafeArea(child: HomeShell.tabs[_i]()),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _i,
-        onDestinationSelected: (i) => setState(() => _i = i),
-        destinations: [
-          for (var k = 0; k < 6; k++)
-            NavigationDestination(icon: Icon(icons[k]), label: labels[k]),
-        ],
+      // Six tabs on a narrow phone: size the labels so the longest one ("Inner
+      // World", "Activity"...) stays on one line in whatever font is chosen.
+      bottomNavigationBar: NavigationBarTheme(
+        data: NavigationBarTheme.of(context).copyWith(
+          labelTextStyle: WidgetStatePropertyAll(
+            TextStyle(fontSize: _fitLabelSize(context, labels), letterSpacing: -0.2, height: 1.1),
+          ),
+        ),
+        child: NavigationBar(
+          selectedIndex: _i,
+          onDestinationSelected: (i) => setState(() => _i = i),
+          destinations: [
+            for (var k = 0; k < 6; k++)
+              NavigationDestination(icon: Icon(icons[k]), label: labels[k]),
+          ],
+        ),
       ),
     );
   }
