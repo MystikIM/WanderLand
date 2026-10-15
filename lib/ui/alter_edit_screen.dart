@@ -146,16 +146,19 @@ class _AlterEditScreenState extends State<AlterEditScreen> {
         Wrap(spacing: 8, children: [
           for (final p in kPronounPresets)
             ChoiceChip(
+              key: Key('pronoun-$p'),
               label: Text(p),
-              selected: _pronouns.text == p,
-              onSelected: (_) => setState(() => _pronouns.text = p),
+              selected: hasPronoun(_pronouns.text, p),
+              onSelected: (_) => setState(() => _pronouns.text = togglePronoun(_pronouns.text, p)),
             ),
         ]),
         const SizedBox(height: 8),
         TextField(
           key: const Key('alter-pronouns'),
           controller: _pronouns,
-          decoration: const InputDecoration(labelText: 'Pronouns (type your own if you like)'),
+          onChanged: (_) => setState(() {}),
+          decoration: const InputDecoration(
+              labelText: 'Pronouns (pick as many as you like, or type your own)'),
         ),
         const SizedBox(height: 12),
         TextField(controller: _role, decoration: const InputDecoration(labelText: 'Role')),
