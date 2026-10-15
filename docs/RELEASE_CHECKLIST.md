@@ -1,4 +1,4 @@
-# Release checklist: WanderLand (InnerWorlds) v0.1.0
+# Release checklist: WanderLand (InnerWorlds) v0.1.1
 
 Honest status of each item on a real phone. Nothing is marked PASS unless it was
 actually checked. Test phone: Revvl 7 Pro 5G, Android 16.
@@ -46,7 +46,7 @@ written here.
 - [ ] Name clearance reviewed (see notes in the handoff memory)
 - [ ] Public GitHub repo created and the code pushed (code only: no keystore, no
       `key.properties`, no APK in git)
-- [ ] GitHub release v0.1.0 created with the APK attached (hosted there because
+- [ ] GitHub release v0.1.1 created with the APK attached (hosted there because
       the website host limits single files to about 25 MB)
 - [ ] Website page checked on a preview, then shipped
 - [ ] Phone checklist above run, results updated here and on the build page
