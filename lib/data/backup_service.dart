@@ -120,9 +120,6 @@ class BackupService implements BackupApi {
 
     // Chat data is private to one phone: never taken from a zip, never wiped by one.
     collections.removeWhere((name, _) => kPrivateCollections.contains(name));
-    final keepChat = {
-      for (final c in kPrivateCollections) c: await _store.all(c),
-    };
 
     // 2. Save a safety copy of what is there now.
     final backups = Directory(p.join(_docs.path, 'backups'));
@@ -132,10 +129,17 @@ class BackupService implements BackupApi {
         .writeAsBytes(await createZip());
 
     // 3. Replace.
-    await restoreDocs(_store, collections);
-    for (final e in keepChat.entries) {
+    // Replace everything except chat, one collection at a time. The chat collections are
+    // never touched, so a failure halfway (or the app being closed) cannot lose them.
+    for (final e in (await _store.exportAll()).entries) {
+      if (kPrivateCollections.contains(e.key)) continue;
       for (final d in e.value) {
-        await _store.put(e.key, d);
+        await _store.delete(e.key, d['id'] as String);
+      }
+    }
+    for (final e in collections.entries) {
+      for (final d in (e.value as List)) {
+        await _store.put(e.key, Map<String, dynamic>.from(d as Map));
       }
     }
     for (final folder in _folders) {

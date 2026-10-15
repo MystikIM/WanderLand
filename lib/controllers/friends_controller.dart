@@ -32,6 +32,8 @@ class FriendsController extends ChangeNotifier {
   static const secretKeyName = 'chat.identity.private';
   static const maxText = 4000;
   static const maxRequestsPerDay = 5;
+  static const keyUnreadable =
+      'This phone could not read its chat key just now. Try again, or reset chat to start fresh.';
   static const keyMissing =
       'This phone lost its chat key, so old friends cannot be read. Reset chat to start fresh.';
 
@@ -80,7 +82,9 @@ class FriendsController extends ChangeNotifier {
   /// friends marked [Friend.littleOk]. Reading, muting and blocking are always allowed.
   bool get locked => _littleLocked();
 
-  Future<void> load() async {
+  Future<void> load() => _exclusive(_load);
+
+  Future<void> _load() async {
     final raw = await _store.get(identityCollection, ChatIdentity.docId);
     identity = raw == null ? null : ChatIdentity.fromJson(raw);
     friends = (await _store.all(friendsCollection)).map(Friend.fromJson).toList()
@@ -119,7 +123,12 @@ class FriendsController extends ChangeNotifier {
     if (cached != null) return cached;
     final me = identity;
     if (me == null) throw StateError('Turn chat on first.');
-    final secret = await _secrets.read(secretKeyName);
+    final String? secret;
+    try {
+      secret = await _secrets.read(secretKeyName);
+    } catch (_) {
+      throw StateError(keyUnreadable);
+    }
     if (secret == null) throw StateError(keyMissing);
     return _keys = IdentityKeys(base64.decode(secret), base64.decode(me.publicKey));
   }
@@ -158,7 +167,11 @@ class FriendsController extends ChangeNotifier {
 
   // ---- turning chat on and off ------------------------------------------
 
-  Future<void> enable({required String username, ChatMode mode = ChatMode.whileOpen}) async {
+  Future<void> enable({required String username, ChatMode mode = ChatMode.whileOpen}) =>
+      _exclusive(() => _enable(username: username, mode: mode));
+
+  Future<void> _enable({required String username, ChatMode mode = ChatMode.whileOpen}) async {
+    _grownUpOnly('turn chat on');
     final problem = usernameProblem(username);
     if (problem != null) throw ArgumentError(problem);
     if (mode == ChatMode.off) throw ArgumentError('Pick "while the app is open" or "always on".');
@@ -182,7 +195,10 @@ class FriendsController extends ChangeNotifier {
     await _startListening();
   }
 
-  Future<void> setMode(ChatMode mode) async {
+  Future<void> setMode(ChatMode mode) => _exclusive(() => _setMode(mode));
+
+  Future<void> _setMode(ChatMode mode) async {
+    _grownUpOnly('turn chat on or off');
     final me = identity;
     if (me == null) throw StateError('Turn chat on first.');
     if (mode == ChatMode.off) await _stopListening();
@@ -191,7 +207,10 @@ class FriendsController extends ChangeNotifier {
     if (mode != ChatMode.off) await _startListening();
   }
 
-  Future<void> setUsername(String username) async {
+  Future<void> setUsername(String username) => _exclusive(() => _setUsername(username));
+
+  Future<void> _setUsername(String username) async {
+    _grownUpOnly('change the chat username');
     final me = identity;
     if (me == null) throw StateError('Turn chat on first.');
     final problem = usernameProblem(username);
@@ -234,6 +253,9 @@ class FriendsController extends ChangeNotifier {
     bool queue = false,
     String? msgId,
   }) async {
+    // Mail that must arrive goes out strictly in order. Best-effort mail (presence, acks)
+    // never jumps ahead of it: the receiver drops anything older than what it has already seen.
+    if (!queue && await _hasPending(f.id)) return false;
     final keys = await _myKeys();
     final pair = await FriendCrypto.derive(keys, base64.decode(f.publicKey));
     final current = _friend(f.id) ?? f;
@@ -255,9 +277,28 @@ class FriendsController extends ChangeNotifier {
         'msgId': ?msgId,
       });
     }
-    final ok = await _transport.send(Envelope(toMailbox, bytes));
-    if (ok && queuedId != null) await _store.delete(outboxCollection, queuedId);
-    return ok;
+    if (queuedId == null) return _transport.send(Envelope(toMailbox, bytes));
+    await _drain(f.id);
+    return await _store.get(outboxCollection, queuedId) == null; // gone = handed over
+  }
+
+  Future<bool> _hasPending(String friendId) async =>
+      (await _store.all(outboxCollection)).any((d) => d['friendId'] == friendId);
+
+  /// Hands over everything waiting for one friend, oldest first, and stops at the first
+  /// failure so nothing is ever sent out of order.
+  Future<void> _drain(String friendId) async {
+    final docs = [
+      for (final d in await _store.all(outboxCollection))
+        if (d['friendId'] == friendId) d,
+    ]..sort((a, b) => (a['n'] as int).compareTo(b['n'] as int));
+    for (final d in docs) {
+      final ok = await _transport.send(Envelope(d['mailbox'] as String, base64.decode(d['frame'] as String)));
+      if (!ok) return;
+      await _store.delete(outboxCollection, d['id'] as String);
+      final mid = d['msgId'] as String?;
+      if (mid != null) await _markMessage(mid, DeliveryState.sent);
+    }
   }
 
   Future<void> _dropOutbox(String friendId, {String? kind}) async {
@@ -286,14 +327,9 @@ class FriendsController extends ChangeNotifier {
 
   Future<void> _flush() async {
     if (!isOn) return;
-    final docs = (await _store.all(outboxCollection))
-      ..sort((a, b) => (a['n'] as int).compareTo(b['n'] as int));
-    for (final d in docs) {
-      final ok = await _transport.send(Envelope(d['mailbox'] as String, base64.decode(d['frame'] as String)));
-      if (!ok) break; // still offline: keep the order
-      await _store.delete(outboxCollection, d['id'] as String);
-      final mid = d['msgId'] as String?;
-      if (mid != null) await _markMessage(mid, DeliveryState.sent);
+    final ids = {for (final d in await _store.all(outboxCollection)) d['friendId'] as String};
+    for (final id in ids) {
+      await _drain(id);
     }
     notifyListeners();
   }
@@ -702,7 +738,10 @@ class FriendsController extends ChangeNotifier {
   }
 
   /// Wipes chat on this phone: identity, friends, messages, waiting mail and the key.
-  Future<void> reset() async {
+  Future<void> reset() => _exclusive(_reset);
+
+  Future<void> _reset() async {
+    _grownUpOnly('reset chat');
     await _stopListening();
     for (final f in friends) {
       await _store.delete(friendsCollection, f.id);
