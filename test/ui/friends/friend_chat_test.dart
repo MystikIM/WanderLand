@@ -119,4 +119,37 @@ void main() {
     await pumpScreen(tester, FriendChatScreen(friendId: id), providers: env.providers);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('REVIEW FOCUS: tapping Send twice sends the message once', (tester) async {
+    final (env, id) = await chatEnv();
+    await pumpScreen(tester, FriendChatScreen(friendId: id), providers: env.providers);
+    await tester.enterText(find.byKey(const Key('friend-input')), 'only once');
+    await tester.tap(find.byKey(const Key('friend-send')));
+    await tester.tap(find.byKey(const Key('friend-send')), warnIfMissed: false);
+    await tester.pumpAndSettle();
+    expect(env.friends.messagesWith(id), hasLength(1));
+  });
+
+  testWidgets('REVIEW FOCUS: if sending fails the words come back into the box and a plain sentence shows', (tester) async {
+    final (env, id) = await chatEnv();
+    await pumpScreen(tester, FriendChatScreen(friendId: id), providers: env.providers);
+    await tester.enterText(find.byKey(const Key('friend-input')), 'please keep me');
+    env.me.little = true; // a little takes the front after the box was shown; this chat is not marked okay
+    await tester.tap(find.byKey(const Key('friend-send')));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('grown-up'), findsWidgets);
+    expect(env.friends.messagesWith(id), isEmpty);
+    final field = tester.widgetList<TextField>(find.byKey(const Key('friend-input')));
+    if (field.isNotEmpty) expect(field.single.controller!.text, 'please keep me');
+  });
+
+  testWidgets('REVIEW FOCUS: a little in a chat not marked okay cannot read the old messages either', (tester) async {
+    final (env, id) = await chatEnv();
+    await env.peer.c.sendMessage(friendId: env.peer.c.friends.single.id, text: 'something unkind');
+    await settle([env.me, env.peer]);
+    env.me.little = true;
+    await pumpScreen(tester, FriendChatScreen(friendId: id), providers: env.providers);
+    expect(find.textContaining('something unkind'), findsNothing);
+    expect(find.textContaining('grown-up'), findsOneWidget);
+  });
 }

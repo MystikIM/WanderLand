@@ -54,4 +54,10 @@ void main() {
     expect(friendProblemText(StateError('Turn chat on first.')), 'Turn chat on first.');
     expect(friendProblemText(Exception('SocketException: boom')), 'Something went wrong. Try again.');
   });
+
+  test('an error with no message of its own gives the plain sentence, never the word null', () {
+    expect(friendProblemText(ArgumentError()), 'Something went wrong. Try again.');
+    expect(friendProblemText(ArgumentError('')), 'Something went wrong. Try again.');
+    expect(friendProblemText(StateError('')), 'Something went wrong. Try again.');
+  });
 }

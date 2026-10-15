@@ -77,7 +77,9 @@ void main() {
       return tester.widget<Text>(find.byKey(const Key('friends-add-problem'))).data!;
     }
 
-    expect(await tryCode('hello'), isNot(contains('Exception')));
+    final bad = await tryCode('hello');
+    expect(bad, isNot(anyOf(contains('Exception'), contains('Bad state'), contains('null'))));
+    expect(bad, isNotEmpty);
     final own = await env.friends.myCode();
     expect(await tryCode(own), contains('your own'));
     final theirs = await env.peer.c.myCode();
@@ -169,5 +171,31 @@ void main() {
     await tester.tap(find.byKey(const Key('friends-scan-camera')));
     await tester.pumpAndSettle();
     expect(find.textContaining('your own'), findsOneWidget);
+  });
+
+  testWidgets('REVIEW FOCUS: tapping Accept twice never leaves an uncaught error', (tester) async {
+    final env = await uiEnv();
+    await env.peer.c.addFromCode(await env.friends.myCode());
+    await settle([env.me, env.peer]);
+    await pumpScreen(tester, const AddFriendScreen(), providers: env.providers);
+    final id = env.friends.pendingRequests.single.id;
+    await tester.tap(find.byKey(Key('friends-accept-$id')));
+    await tester.tap(find.byKey(Key('friends-accept-$id')), warnIfMissed: false);
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    expect(env.friends.friends.where((f) => f.state == FriendState.friends), hasLength(1));
+  });
+
+  testWidgets('REVIEW FOCUS: tapping Send friend request twice still ends with the request sent', (tester) async {
+    final env = await uiEnv();
+    final code = await env.peer.c.myCode();
+    await pumpScreen(tester, const AddFriendScreen(), providers: env.providers);
+    await tester.enterText(find.byKey(const Key('friends-code-input')), code);
+    await tester.tap(find.byKey(const Key('friends-add-go')));
+    await tester.tap(find.byKey(const Key('friends-add-go')), warnIfMissed: false);
+    await tester.pumpAndSettle();
+    expect(env.friends.friends, hasLength(1));
+    expect(find.byKey(const Key('friends-add-problem')), findsNothing);
+    expect(find.textContaining('Request sent to bravo'), findsOneWidget);
   });
 }

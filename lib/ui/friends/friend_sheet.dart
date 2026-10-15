@@ -6,6 +6,17 @@ import '../../domain/little.dart';
 import '../little_scope.dart';
 import 'friend_text.dart';
 
+/// Opens the per-friend sheet over whatever is on screen.
+Future<void> showFriendSheet(BuildContext context, FriendsController fc, String friendId) =>
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (_) => ChangeNotifierProvider<FriendsController>.value(
+        value: fc,
+        child: FriendSheet(friendId: friendId),
+      ),
+    );
+
 /// Everything about one friend: what they may see, mute, block, remove, safety number.
 class FriendSheet extends StatefulWidget {
   const FriendSheet({super.key, required this.friendId});

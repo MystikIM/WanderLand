@@ -30,8 +30,14 @@ String deliveryHeader(Iterable<FriendMessage> messages) =>
 
 /// Turns whatever the controller threw into one plain sentence for a person.
 String friendProblemText(Object e) {
-  if (e is ArgumentError) return '${e.message}';
-  if (e is FormatException) return e.message;
-  if (e is StateError) return e.message;
-  return 'Something went wrong. Try again.';
+  const fallback = 'Something went wrong. Try again.';
+  String clean(Object? m) {
+    final t = m == null ? '' : '$m'.trim();
+    return (t.isEmpty || t == 'null') ? fallback : t;
+  }
+
+  if (e is ArgumentError) return clean(e.message);
+  if (e is FormatException) return clean(e.message);
+  if (e is StateError) return clean(e.message);
+  return fallback;
 }

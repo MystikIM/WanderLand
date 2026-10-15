@@ -26,6 +26,9 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
   String? _myCode;
   String? _problem;
   String? _sentTo;
+  bool _adding = false;
+  bool _makingCode = false;
+  final Set<String> _answering = {};
   late final QrPhotoSource _photos = widget.photos ?? DevicePhotoSource();
   late final QrReader _reader = widget.reader ?? ZxingQrReader();
 
@@ -36,15 +39,33 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
   }
 
   Future<void> _showCode() async {
+    if (_makingCode) return;
+    _makingCode = true;
     try {
       final code = await context.read<FriendsController>().myCode();
       if (mounted) setState(() => _myCode = code);
     } catch (e) {
       if (mounted) setState(() => _problem = friendProblemText(e));
+    } finally {
+      _makingCode = false;
+    }
+  }
+
+  /// Accept or Decline: one at a time per request, and any failure becomes a plain sentence.
+  Future<void> _answer(String id, Future<void> Function() act) async {
+    if (!_answering.add(id)) return;
+    try {
+      await act();
+    } catch (e) {
+      if (mounted) setState(() => _problem = friendProblemText(e));
+    } finally {
+      _answering.remove(id);
     }
   }
 
   Future<void> _add() async {
+    if (_adding) return;
+    _adding = true;
     final fc = context.read<FriendsController>();
     try {
       final f = await fc.addFromCode(_input.text.trim());
@@ -61,6 +82,8 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
           _problem = friendProblemText(e);
         });
       }
+    } finally {
+      _adding = false;
     }
   }
 
@@ -99,7 +122,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
               Text('My code', style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: 4),
               const Text(
-                  'Show this to your friend, or send it to them in a private message. It only works once, and they need the app too.'),
+                  'Let your friend photograph this QR, or copy the code and send it to them in a private message. It only works once, they need the app too, and only your 5 newest codes work.'),
               const SizedBox(height: 8),
               if (_myCode == null)
                 OutlinedButton(key: const Key('friends-show-code'), onPressed: _showCode, child: const Text('Show my code'))
@@ -174,9 +197,9 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                   subtitle: const Text('wants to be your friend'),
                   trailing: Wrap(spacing: 4, children: [
                     TextButton(
-                        key: Key('friends-decline-${r.id}'), onPressed: () => fc.declineRequest(r.id), child: const Text('Decline')),
+                        key: Key('friends-decline-${r.id}'), onPressed: () => _answer(r.id, () => fc.declineRequest(r.id)), child: const Text('Decline')),
                     FilledButton(
-                        key: Key('friends-accept-${r.id}'), onPressed: () => fc.acceptRequest(r.id), child: const Text('Accept')),
+                        key: Key('friends-accept-${r.id}'), onPressed: () => _answer(r.id, () => fc.acceptRequest(r.id)), child: const Text('Accept')),
                   ]),
                 ),
             ]),

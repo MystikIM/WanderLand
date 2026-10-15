@@ -87,4 +87,39 @@ void main() {
     await pumpScreen(tester, const Scaffold(body: FriendsSection()), providers: env.providers);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('the first switch-on card is honest about the limits', (tester) async {
+    final env = await uiEnv(chatOn: false);
+    await pumpScreen(tester, const Scaffold(body: FriendsSection()), providers: env.providers);
+    expect(find.textContaining('size and time'), findsOneWidget);
+    expect(find.textContaining('forward secrecy'), findsOneWidget);
+  });
+
+  testWidgets('REVIEW FOCUS: double-tapping Turn on does not pop the screen underneath', (tester) async {
+    final env = await uiEnv(chatOn: false);
+    await pumpScreen(tester, const Scaffold(body: FriendsSection()), providers: env.providers);
+    await tester.tap(find.byKey(const Key('friends-turn-on')));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const Key('friends-username')), 'moonlight');
+    await tester.tap(find.byKey(const Key('friends-enable')));
+    await tester.tap(find.byKey(const Key('friends-enable')), warnIfMissed: false);
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    expect(env.friends.isOn, isTrue);
+    expect(find.byKey(const Key('friends-add')), findsOneWidget); // still here, not a black screen
+  });
+
+  testWidgets('REVIEW FOCUS: a friend not marked okay shows no message preview to a little, but Mute and Block are still reachable', (tester) async {
+    final env = await uiEnv();
+    await befriend(env.me, env.peer);
+    await env.peer.c.sendMessage(friendId: env.peer.c.friends.single.id, text: 'something unkind');
+    await settle([env.me, env.peer]);
+    env.me.little = true;
+    await pumpScreen(tester, const Scaffold(body: FriendsSection()), providers: env.providers);
+    expect(find.textContaining('something unkind'), findsNothing);
+    await tester.longPress(find.byKey(Key('friend-${env.friends.friends.single.id}')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('friend-block')), findsOneWidget);
+    expect(find.byKey(const Key('friend-mute')), findsOneWidget);
+  });
 }

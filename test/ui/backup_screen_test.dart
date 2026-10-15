@@ -134,4 +134,11 @@ void main() {
     final export = tester.widget<FilledButton>(find.byKey(const Key('backup-export')));
     expect(export.onPressed, isNotNull);
   });
+
+  testWidgets('the screen says friend chat is never in a backup, and a new phone means adding friends again', (tester) async {
+    await pumpScreen(tester, const BackupScreen(), providers: await env());
+    expect(find.textContaining('never in a backup'), findsOneWidget);
+    expect(find.textContaining('add your friends again'), findsOneWidget);
+    expect(find.textContaining('journal, chat,'), findsNothing); // "chat" alone read as if friend chats were inside
+  });
 }

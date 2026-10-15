@@ -78,8 +78,12 @@ class _BackupScreenState extends State<BackupScreen> {
       appBar: AppBar(title: const Text('Backup & restore')),
       body: ListView(padding: const EdgeInsets.all(16), children: [
         const Text(
-            'A backup is one file with your whole system in it: alters, front history, journal, chat, inner world, '
+            'A backup is one file with your whole system in it: alters, front history, journal, the chat between your alters, inner world, '
             'pictures, fonts and settings. It is not encrypted, so keep it somewhere private.'),
+        const SizedBox(height: 8),
+        const Text(
+            'Friend chat is never in a backup: your friends and conversations stay on this phone only. '
+            'If you restore on a new phone, you will need to add your friends again.'),
         const SizedBox(height: 16),
         FilledButton.icon(
           key: const Key('backup-export'),

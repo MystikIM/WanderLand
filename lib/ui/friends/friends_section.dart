@@ -6,6 +6,7 @@ import '../../friends/friend_models.dart';
 import '../little_scope.dart';
 import 'add_friend_screen.dart';
 import 'friend_chat_screen.dart';
+import 'friend_sheet.dart';
 import 'friend_text.dart';
 
 class FriendsSection extends StatelessWidget {
@@ -73,12 +74,16 @@ class _FriendTile extends StatelessWidget {
     final waiting = f.state == FriendState.pendingOut;
     final notForLittles = fc.locked && !f.littleOk;
     final out = outNowLine(f);
-    final preview = waiting ? 'Waiting for them to accept' : previewOf(fc.messagesWith(f.id));
+    // A little never sees the words of a friend a grown-up has not okayed.
+    final preview = waiting
+        ? 'Waiting for them to accept'
+        : (notForLittles ? copy('guardMessage') : previewOf(fc.messagesWith(f.id)));
     return ListTile(
       key: Key('friend-${f.id}'),
       leading: CircleAvatar(child: Text(f.displayName.characters.first.toUpperCase())),
       title: Text(f.displayName, maxLines: 1, overflow: TextOverflow.ellipsis),
-      subtitle: Text(out.isEmpty || waiting ? preview : '$preview\n$out', maxLines: 2, overflow: TextOverflow.ellipsis),
+      subtitle: Text(out.isEmpty || waiting || notForLittles ? preview : '$preview\n$out', maxLines: 2, overflow: TextOverflow.ellipsis),
+      onLongPress: waiting ? null : () => showFriendSheet(context, fc, f.id),
       trailing: notForLittles ? const Icon(Icons.lock) : (f.muted ? const Icon(Icons.notifications_off) : null),
       onTap: waiting
           ? null
@@ -111,6 +116,9 @@ class _TurnOn extends StatelessWidget {
       const Text('• Messages are scrambled before they leave your phone, so nobody in the middle can read them.'),
       const Text('• It uses the internet, and only while chat is turned on. Until you turn it on, nothing is sent.'),
       const Text('• You choose, friend by friend, whether they can see who is out.'),
+      const Text('• Messages pass through a relay server. It cannot read them, but it can see the size and time of each one.'),
+      const Text('• There is no "forward secrecy" yet: if someone ever got your chat key, they could read messages they had recorded.'),
+      const Text('• Blocking stops a person from reaching you. Nobody reviews or moderates chats.'),
       const SizedBox(height: 16),
       FilledButton(
         key: const Key('friends-turn-on'),
@@ -130,8 +138,9 @@ class _UsernameDialog extends StatefulWidget {
 }
 
 class _UsernameDialogState extends State<_UsernameDialog> {
-  final _name = TextEditingController();
+  late final TextEditingController _name = TextEditingController(text: widget.fc.identity?.username ?? '');
   String? _err;
+  bool _busy = false;
 
   @override
   void dispose() {
@@ -140,16 +149,21 @@ class _UsernameDialogState extends State<_UsernameDialog> {
   }
 
   Future<void> _go() async {
+    if (_busy) return; // a second tap while the first is still working
     final problem = usernameProblem(_name.text);
     if (problem != null) {
       setState(() => _err = problem);
       return;
     }
+    setState(() => _busy = true);
     try {
       await widget.fc.enable(username: _name.text.trim());
-      if (mounted) Navigator.pop(context);
+      // Close only this dialog, and only if it is still the one on top.
+      if (mounted && (ModalRoute.of(context)?.isCurrent ?? false)) Navigator.pop(context);
     } catch (e) {
       if (mounted) setState(() => _err = friendProblemText(e));
+    } finally {
+      if (mounted) setState(() => _busy = false);
     }
   }
 
@@ -168,8 +182,8 @@ class _UsernameDialogState extends State<_UsernameDialog> {
         ]),
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Not now')),
-        FilledButton(key: const Key('friends-enable'), onPressed: _go, child: const Text('Turn on')),
+        TextButton(onPressed: _busy ? null : () => Navigator.pop(context), child: const Text('Not now')),
+        FilledButton(key: const Key('friends-enable'), onPressed: _busy ? null : _go, child: const Text('Turn on')),
       ],
     );
   }

@@ -19,6 +19,7 @@ class _FriendChatScreenState extends State<FriendChatScreen> {
   final _input = TextEditingController();
   String? _as; // chosen speaker; null = whoever is out
   bool _closing = false;
+  bool _sending = false;
 
   @override
   void dispose() {
@@ -27,15 +28,20 @@ class _FriendChatScreenState extends State<FriendChatScreen> {
   }
 
   Future<void> _send(String? asAlterId) async {
+    if (_sending) return; // a second tap while the first is still on its way
     final text = _input.text;
     if (text.trim().isEmpty) return;
     final fc = context.read<FriendsController>();
     final messenger = ScaffoldMessenger.of(context);
+    setState(() => _sending = true);
+    _input.clear(); // anything typed from now on is the next message
     try {
       await fc.sendMessage(friendId: widget.friendId, text: text, asAlterId: asAlterId);
-      _input.clear();
     } catch (e) {
+      if (mounted && _input.text.isEmpty) _input.text = text; // give the words back
       messenger.showSnackBar(SnackBar(content: Text(friendProblemText(e))));
+    } finally {
+      if (mounted) setState(() => _sending = false);
     }
   }
 
@@ -71,14 +77,7 @@ class _FriendChatScreenState extends State<FriendChatScreen> {
           IconButton(
             key: const Key('friend-settings'),
             icon: const Icon(Icons.tune),
-            onPressed: () => showModalBottomSheet<void>(
-              context: context,
-              isScrollControlled: true,
-              builder: (_) => ChangeNotifierProvider<FriendsController>.value(
-                value: fc,
-                child: FriendSheet(friendId: friend.id),
-              ),
-            ),
+            onPressed: () => showFriendSheet(context, fc, friend.id),
           ),
         ],
       ),
@@ -88,15 +87,16 @@ class _FriendChatScreenState extends State<FriendChatScreen> {
           child: Text(deliveryHeader(messages), style: Theme.of(context).textTheme.bodySmall),
         ),
         Expanded(
-          child: messages.isEmpty
+          child: blockedForLittle
+              // A little cannot read this chat, even old messages. Mute and Block stay in the top bar.
+              ? Center(child: Padding(padding: const EdgeInsets.all(16), child: Text(copy('guardMessage'))))
+              : messages.isEmpty
               ? const Center(child: Text('No messages yet. Say hi!'))
               : ListView(padding: const EdgeInsets.all(8), children: [
                   for (final m in messages) _Bubble(key: Key('friend-msg-${m.id}'), m: m),
                 ]),
         ),
-        if (blockedForLittle)
-          Padding(padding: const EdgeInsets.all(12), child: Text(copy('guardMessage')))
-        else
+        if (!blockedForLittle)
           Padding(
             padding: const EdgeInsets.all(8),
             child: Row(children: [
@@ -122,7 +122,7 @@ class _FriendChatScreenState extends State<FriendChatScreen> {
                   onSubmitted: (_) => _send(speaker),
                 ),
               ),
-              IconButton(key: const Key('friend-send'), icon: const Icon(Icons.send), onPressed: () => _send(speaker)),
+              IconButton(key: const Key('friend-send'), icon: const Icon(Icons.send), onPressed: _sending ? null : () => _send(speaker)),
             ]),
           ),
       ]),
