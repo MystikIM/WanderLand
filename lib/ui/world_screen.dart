@@ -9,6 +9,7 @@ import '../domain/world.dart';
 import 'alter_link_nav.dart';
 import 'alters_screen.dart' show AlterAvatar;
 import 'appearance_screen.dart' show kSwatches;
+import 'piece_body.dart';
 import 'scene_painters.dart';
 import 'world_entry_screen.dart';
 
@@ -96,7 +97,9 @@ class _WorldScreenState extends State<WorldScreen> {
       top: pos.dy * box.height - size / 2,
       width: size,
       height: size,
-      child: GestureDetector(
+      child: PieceBody(
+        kind: it.kind,
+        tint: it.colorValue == null ? null : Color(it.colorValue!),
         onPanUpdate: (d) => setState(() {
           final cur = _drag[it.id] ?? Offset(it.x, it.y);
           _drag[it.id] = Offset(
@@ -109,9 +112,6 @@ class _WorldScreenState extends State<WorldScreen> {
           if (o != null) world.moveItem(it.id, o.dx, o.dy);
         },
         onLongPress: () => _pieceSheet(it),
-        child: CustomPaint(
-          painter: PiecePainter(it.kind, it.colorValue == null ? null : Color(it.colorValue!)),
-        ),
       ),
     );
   }
