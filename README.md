@@ -1,6 +1,6 @@
-# WanderLand InnerWorlds
+# WanderLand
 
-*A multi plural system manager / chaos crunch.*
+**InnerWorlds** · *A multi plural system manager / chaos crunch.*
 
 A free Android app for plural and DID systems. It works fully **offline**: no
 ads, no tracking, no account needed, and your data stays on your phone.

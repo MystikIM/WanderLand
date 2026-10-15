@@ -1,4 +1,6 @@
-const String appName = 'WanderLand InnerWorlds';
+// The name is WanderLand. "InnerWorlds" is the descriptor that goes with it.
+const String appName = 'WanderLand';
+const String appDescriptor = 'InnerWorlds';
 const String appTagline = 'A multi plural system manager / chaos crunch';
 
 // The dedication. Edit the words here and they change everywhere.

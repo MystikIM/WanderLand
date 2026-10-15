@@ -33,7 +33,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       body: SafeArea(
         child: ListView(padding: const EdgeInsets.all(20), children: [
           Text(appName, style: Theme.of(context).textTheme.headlineMedium),
-          Text(appTagline),
+          Text('$appDescriptor · $appTagline'),
           const SizedBox(height: 24),
           Text('Let\'s make this yours.', style: Theme.of(context).textTheme.titleLarge),
           const Text('Nothing here is required, and you can change all of it later.'),

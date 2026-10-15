@@ -119,7 +119,7 @@ class DedicationScreen extends StatelessWidget {
           const SizedBox(height: 20),
           Text(appName, textAlign: TextAlign.center, style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 4),
-          Text(appTagline, textAlign: TextAlign.center),
+          Text('$appDescriptor · $appTagline', textAlign: TextAlign.center),
           const SizedBox(height: 12),
           Center(
             child: TextButton(

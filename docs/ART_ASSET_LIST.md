@@ -1,4 +1,4 @@
-# WanderLand InnerWorlds: art wishlist
+# WanderLand (InnerWorlds): art wishlist
 
 Everything in the app is **placeholder art drawn in code** right now (so the app
 never looks blank). This is the list of real art to generate later. Nothing here
@@ -120,7 +120,7 @@ Shared extras (once):
 
 ## 9. Build page / public site (when we get to the release step)
 
-- [ ] Logo lockup: icon + "WanderLand InnerWorlds" text, horizontal, transparent
+- [ ] Logo lockup: icon + "WanderLand" text with "InnerWorlds" as the small descriptor line under it, horizontal, transparent
 - [ ] 4 to 6 phone screenshots (I'll capture these from the real app)
 - [ ] Social/preview card, 1200 x 630, opaque
 

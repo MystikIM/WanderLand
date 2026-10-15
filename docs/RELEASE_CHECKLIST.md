@@ -1,4 +1,4 @@
-# Release checklist: v0.1.0
+# Release checklist: WanderLand (InnerWorlds) v0.1.0
 
 Honest status of each item on a real phone. Nothing is marked PASS unless it was
 actually checked. Test phone: Revvl 7 Pro 5G, Android 16.
@@ -33,8 +33,8 @@ written here.
 
 ## Release files
 
-- `dist/wanderland-innerworlds-0.1.0.apk` (git-ignored)
-- SHA-256: `884112f2d2f161a9df24fd3d558bf36b69970e701d72f05f597550edb64a1ba2`
+- `dist/wanderland-0.1.0.apk` (git-ignored)
+- SHA-256: `5cf51796b6d00086cda533ebfd36afd93ddde41604d45fa9025733332b556e62`
 - Size: 58.9 MB, minimum Android 7.0
 - Signing certificate SHA-256: `c67f0036fe4e9a8fb683e054e7ca7e78119bb8e0074f31942aa16e79d74b9367`
 
