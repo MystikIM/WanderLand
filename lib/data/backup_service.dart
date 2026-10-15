@@ -6,6 +6,7 @@ import 'package:path/path.dart' as p;
 import '../app_info.dart';
 import '../domain/ids.dart';
 import 'doc_store.dart';
+import '../friends/friend_models.dart';
 
 typedef ReloadAll = Future<void> Function();
 
@@ -44,7 +45,8 @@ class BackupService implements BackupApi {
       'format': format,
       'app': appName,
       'exportedAt': _clock().toIso8601String(),
-      'collections': await _store.exportAll(),
+      'collections': (await _store.exportAll())
+        ..removeWhere((name, _) => kPrivateCollections.contains(name)),
     }));
     archive.addFile(ArchiveFile('data.json', json.length, json));
     for (final folder in _folders) {
@@ -116,6 +118,12 @@ class BackupService implements BackupApi {
       throw BackupException(_notABackup);
     }
 
+    // Chat data is private to one phone: never taken from a zip, never wiped by one.
+    collections.removeWhere((name, _) => kPrivateCollections.contains(name));
+    final keepChat = {
+      for (final c in kPrivateCollections) c: await _store.all(c),
+    };
+
     // 2. Save a safety copy of what is there now.
     final backups = Directory(p.join(_docs.path, 'backups'));
     await backups.create(recursive: true);
@@ -125,6 +133,11 @@ class BackupService implements BackupApi {
 
     // 3. Replace.
     await restoreDocs(_store, collections);
+    for (final e in keepChat.entries) {
+      for (final d in e.value) {
+        await _store.put(e.key, d);
+      }
+    }
     for (final folder in _folders) {
       final dir = Directory(p.join(_docs.path, folder));
       if (await dir.exists()) await dir.delete(recursive: true);
