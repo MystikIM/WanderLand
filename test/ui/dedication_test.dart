@@ -44,6 +44,9 @@ void main() {
     await pumpScreen(tester, const DedicationScreen(), providers: p);
     expect(find.text(dedicationMotto1), findsOneWidget);
     expect(find.text(dedicationMotto2), findsOneWidget);
+    expect(find.byKey(const Key('dedication-quote-from')), findsOneWidget);
+    expect(dedicationMotto1, startsWith('“'));
+    expect(dedicationMotto2, endsWith('”'));
     expect(find.textContaining('The Zoo and Joker_Wolf'), findsOneWidget);
     expect(find.textContaining('MystikIM'), findsOneWidget);
     expect(find.byKey(const Key('dedication-wolf')), findsOneWidget);
