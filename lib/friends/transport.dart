@@ -2,9 +2,13 @@ import 'dart:typed_data';
 
 /// One sealed message addressed to a mailbox. The transport never sees words.
 class Envelope {
-  const Envelope(this.mailbox, this.bytes);
+  const Envelope(this.mailbox, this.bytes, {this.onHandled});
   final String mailbox;
   final Uint8List bytes;
+
+  /// Called by the app once it has finished with this mail (saved, or deliberately ignored).
+  /// A transport that keeps mail on a relay only lets the relay delete it after this.
+  final void Function()? onHandled;
 }
 
 /// How sealed mail travels. Pieces 2 and 3 provide real ones (relay, same Wi-Fi).

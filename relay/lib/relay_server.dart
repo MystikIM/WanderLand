@@ -16,6 +16,9 @@ class RelayServer {
     this.putsPerMinute = 60,
     this.pollMaxWait = const Duration(seconds: 25),
     this.maxPollMailboxes = 256,
+    this.maxPollBytes = 1024 * 1024,
+    this.putsPerMinutePerIp = 300,
+    this.trustForwardedIp = false,
     Now? now,
   }) : _now = now ?? DateTime.now;
 
@@ -23,10 +26,21 @@ class RelayServer {
   final int putsPerMinute;
   final Duration pollMaxWait;
   final int maxPollMailboxes;
+
+  /// One poll answer never carries more than about this many bytes of mail (the app asks again).
+  final int maxPollBytes;
+
+  /// Puts allowed per minute from one address, across all mailboxes.
+  final int putsPerMinutePerIp;
+
+  /// Behind a tunnel or proxy, read the real address from its header. Never turn this on if the
+  /// relay can be reached directly, because anyone could then fake the header.
+  final bool trustForwardedIp;
   final Now _now;
 
   HttpServer? _http;
   final Map<String, List<DateTime>> _recentPuts = {};
+  final Map<String, List<DateTime>> _recentIpPuts = {};
   final Set<_Waiter> _waiters = {};
 
   int get port => _http!.port;
@@ -104,6 +118,10 @@ class RelayServer {
     if (body == null) return _reply(req, 413, text: 'too big');
     if (body.isEmpty) return _reply(req, 400, text: 'empty');
     final now = _now();
+    final ip = _addressOf(req);
+    if (_recentIpPuts.length > 20000) _recentIpPuts.clear();
+    final ipRecent = (_recentIpPuts[ip] ??= [])..removeWhere((t) => now.difference(t) > const Duration(minutes: 1));
+    if (ipRecent.length >= putsPerMinutePerIp) return _reply(req, 429, text: 'slow down', retryAfter: 30);
     if (_recentPuts.length > 20000) _recentPuts.clear();
     final recent = (_recentPuts[box] ??= [])..removeWhere((t) => now.difference(t) > const Duration(minutes: 1));
     if (recent.length >= putsPerMinute) return _reply(req, 429, text: 'slow down', retryAfter: 30);
@@ -114,9 +132,18 @@ class RelayServer {
         return _reply(req, 429, text: 'full', retryAfter: 60);
       case PutResult.ok:
         recent.add(now);
+        ipRecent.add(now);
         _wake(box);
         return _reply(req, 204);
     }
+  }
+
+  String _addressOf(HttpRequest req) {
+    if (trustForwardedIp) {
+      final h = req.headers.value('cf-connecting-ip') ?? req.headers.value('x-forwarded-for');
+      if (h != null && h.trim().isNotEmpty) return h.split(',').first.trim();
+    }
+    return req.connectionInfo?.remoteAddress.address ?? 'unknown';
   }
 
   void _wake(String box) {
@@ -141,7 +168,7 @@ class RelayServer {
       return _reply(req, 400, text: 'bad mailboxes');
     }
     final waitFor = Duration(milliseconds: (wait * 1000).clamp(0, pollMaxWait.inMilliseconds));
-    var items = await store.peek(boxes);
+    var items = await store.peek(boxes, maxBytes: maxPollBytes);
     if (items.isEmpty && waitFor > Duration.zero) {
       final w = _Waiter(boxes.toSet());
       _waiters.add(w);
@@ -151,7 +178,7 @@ class RelayServer {
       await w.done.future;
       timer.cancel();
       _waiters.remove(w);
-      items = await store.peek(boxes);
+      items = await store.peek(boxes, maxBytes: maxPollBytes);
     }
     await _reply(req, 200, json: {
       'items': [

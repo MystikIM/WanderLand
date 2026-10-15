@@ -144,7 +144,12 @@ class FriendsController extends ChangeNotifier {
     final me = identity!;
     await _sub?.cancel();
     _sub = _transport.incoming.listen((e) {
-      _inboxQueue = _inboxQueue.then((_) => _handle(e)).catchError((Object _) {});
+      _inboxQueue = _inboxQueue.then((_) async {
+        await _handle(e);
+        // Only now may a relay forget it. If chat was switched off meanwhile the mail was not
+        // looked at, so it is left where it is.
+        if (isOn) e.onHandled?.call();
+      }).catchError((Object _) {});
     });
     for (final f in friends.where((f) => f.state != FriendState.blocked)) {
       await _transport.listenOn(f.inbox);

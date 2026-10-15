@@ -53,6 +53,9 @@ class MemoryTransport implements FriendTransport {
   final Set<String> listening = {};
   final List<String> drops = [];
 
+  /// Hand this phone a piece of mail directly, as if it had just arrived.
+  void inject(Envelope e) => _ctl.add(e);
+
   @override
   Future<void> drop(String mailbox) async {
     drops.add(mailbox);
@@ -183,6 +186,7 @@ class RelayPhone {
     secrets = MemorySecretStore();
     transport = _testRelay(base);
     c = _controller();
+    _watchOnline();
   }
 
   final Uri base;
@@ -191,6 +195,15 @@ class RelayPhone {
   late final MemorySecretStore secrets;
   late RelayTransport transport;
   late FriendsController c;
+  StreamSubscription<bool>? _online;
+
+  /// Same as the app: when the relay comes back, send whatever was waiting.
+  void _watchOnline() {
+    _online?.cancel();
+    _online = transport.onlineChanges.listen((on) {
+      if (on && c.isOn) c.flush().catchError((Object _) {});
+    });
+  }
 
   FriendsController _controller() => FriendsController(
         store: store,
@@ -211,14 +224,17 @@ class RelayPhone {
 
   /// The app closed and opened again: same database and keys, a fresh connection.
   Future<void> restart() async {
+    await _online?.cancel();
     c.dispose();
     await transport.close();
     transport = _testRelay(base);
     c = _controller();
+    _watchOnline();
     await c.load();
   }
 
   Future<void> close() async {
+    await _online?.cancel();
     c.dispose();
     await transport.close();
   }

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -48,6 +49,7 @@ class _PluralAppState extends State<PluralApp> with WidgetsBindingObserver {
   late final JournalController journal = JournalController(widget.store)..load();
   late final ChatController chat = ChatController(widget.store)..load();
   // Friend chat is built but switched off: nothing connects until chat is turned on.
+  StreamSubscription<bool>? _relayOnline;
   late final RelayTransport relay = RelayTransport(Uri.parse(kRelayUrl));
   late final FriendsController friends = FriendsController(
     store: widget.store,
@@ -119,6 +121,10 @@ class _PluralAppState extends State<PluralApp> with WidgetsBindingObserver {
     front.addListener(_publishFront);
     notifySync.start(); // fire and forget; must not block startup
     quickAccess.start();
+    // Whenever the relay comes back, send whatever was waiting to go.
+    _relayOnline = relay.onlineChanges.listen((on) {
+      if (on && friends.isOn) friends.flush().catchError((Object _) {});
+    });
   }
 
   @override
@@ -138,6 +144,7 @@ class _PluralAppState extends State<PluralApp> with WidgetsBindingObserver {
     front.removeListener(_syncBuddy);
     front.removeListener(_publishFront);
     friends.dispose();
+    _relayOnline?.cancel();
     relay.close();
     super.dispose();
   }

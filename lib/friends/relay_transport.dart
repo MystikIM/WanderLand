@@ -30,6 +30,11 @@ class RelayTransport implements FriendTransport {
   final StreamController<Envelope> _incoming = StreamController<Envelope>.broadcast();
   final StreamController<bool> _onlineChanges = StreamController<bool>.broadcast();
   final Set<String> _listening = {};
+
+  /// Mail shown to the app that the app has not confirmed yet. Not shown a second time.
+  final Set<String> _unconfirmed = {};
+  HttpClientRequest? _pollRequest;
+  bool _restartPoll = false;
   bool _running = false;
   bool _closed = false;
   bool _online = false;
@@ -56,8 +61,9 @@ class RelayTransport implements FriendTransport {
       final res = await req.close().timeout(requestTimeout);
       await res.drain<void>().timeout(requestTimeout);
       if (res.statusCode == 204) return true;
-      // 400 and 413 will never succeed, so count them as handled instead of blocking the queue.
-      return res.statusCode == 400 || res.statusCode == 413;
+      // 413 ("too big") can never succeed, so count it as handled instead of blocking the queue.
+      // Any other answer (a proxy's 400, a 5xx) means not sent, try again later.
+      return res.statusCode == 413;
     } catch (_) {
       return false;
     }
@@ -65,8 +71,15 @@ class RelayTransport implements FriendTransport {
 
   @override
   Future<void> listenOn(String mailbox) async {
-    _listening.add(mailbox);
-    if (!_running && !_closed) unawaited(_loop());
+    final added = _listening.add(mailbox);
+    if (_closed) return;
+    if (!_running) {
+      unawaited(_loop());
+    } else if (added) {
+      // A long wait is in progress for the old list: cut it short so the new mailbox is checked now.
+      _restartPoll = true;
+      _pollRequest?.abort();
+    }
   }
 
   @override
@@ -76,8 +89,9 @@ class RelayTransport implements FriendTransport {
 
   @override
   Future<void> drop(String mailbox) async {
-    _listening.remove(mailbox);
-    if (_closed) return;
+    final wasListening = _listening.remove(mailbox);
+    // Chat is off (nothing listened to it): do not touch the network at all.
+    if (_closed || !wasListening) return;
     try {
       final req = await _client.deleteUrl(base.resolve('v1/m/$mailbox')).timeout(requestTimeout);
       final res = await req.close().timeout(requestTimeout);
@@ -100,22 +114,27 @@ class RelayTransport implements FriendTransport {
     _running = true;
     var delay = backoffMin;
     while (_listening.isNotEmpty && !_closed) {
+      _restartPoll = false;
       try {
         final boxes = _listening.take(maxMailboxes).toList();
         final items = await _poll(boxes);
         _setOnline(true);
         delay = backoffMin;
-        final acks = <Map<String, String>>[];
+        var fresh = 0;
         for (final it in items) {
-          // Mail for a mailbox we stopped listening to is left alone (not shown, not acknowledged),
+          // Mail for a mailbox we stopped listening to is left alone (not shown, not confirmed),
           // so it is still waiting if chat is switched back on. A blocked friend uses drop().
           if (!_listening.contains(it.mailbox) || _closed) continue;
-          _incoming.add(Envelope(it.mailbox, it.bytes));
-          acks.add({'m': it.mailbox, 'i': it.id});
+          final key = '${it.mailbox}/${it.id}';
+          if (!_unconfirmed.add(key)) continue; // already shown, waiting for the app to finish
+          fresh++;
+          _incoming.add(Envelope(it.mailbox, it.bytes, onHandled: () => unawaited(_confirm(it, key))));
         }
-        if (acks.isNotEmpty) await _ack(acks);
+        // Nothing new (only mail the app is still working on): do not ask again at once.
+        if (fresh == 0 && items.isNotEmpty) await Future<void>.delayed(backoffMin);
       } catch (_) {
         if (_closed) break;
+        if (_restartPoll) continue; // we cut the wait short on purpose; nothing is wrong
         _setOnline(false);
         await Future<void>.delayed(delay);
         delay = delay * 2 > backoffMax ? backoffMax : delay * 2;
@@ -127,11 +146,21 @@ class RelayTransport implements FriendTransport {
 
   Future<List<_Item>> _poll(List<String> boxes) async {
     final req = await _client.postUrl(base.resolve('v1/poll')).timeout(requestTimeout);
-    req.headers.contentType = ContentType.json;
-    req.add(utf8.encode(jsonEncode({'m': boxes, 'wait': pollWait.inSeconds})));
-    final res = await req.close().timeout(pollWait + requestTimeout);
-    final text = await utf8.decodeStream(res).timeout(requestTimeout);
-    if (res.statusCode != 200) throw HttpException('poll ${res.statusCode}');
+    _pollRequest = req;
+    final String text;
+    final int status;
+    try {
+      req.headers.contentType = ContentType.json;
+      req.add(utf8.encode(jsonEncode({'m': boxes, 'wait': pollWait.inSeconds})));
+      final res = await req.close().timeout(pollWait + requestTimeout);
+      status = res.statusCode;
+      // The timeout applies to each gap with no data, not to the whole answer, so a slow
+      // connection that keeps delivering is never cut off.
+      text = await utf8.decodeStream(res.timeout(requestTimeout));
+    } finally {
+      if (identical(_pollRequest, req)) _pollRequest = null;
+    }
+    if (status != 200) throw HttpException('poll $status');
     final j = jsonDecode(text) as Map;
     return [
       for (final x in (j['items'] as List))
@@ -143,12 +172,25 @@ class RelayTransport implements FriendTransport {
     ];
   }
 
-  Future<void> _ack(List<Map<String, String>> items) async {
-    final req = await _client.postUrl(base.resolve('v1/ack')).timeout(requestTimeout);
-    req.headers.contentType = ContentType.json;
-    req.add(utf8.encode(jsonEncode({'items': items})));
-    final res = await req.close().timeout(requestTimeout);
-    await res.drain<void>().timeout(requestTimeout);
+  /// The app has finished with this mail: now the relay may delete it.
+  Future<void> _confirm(_Item it, String key) async {
+    try {
+      final req = await _client.postUrl(base.resolve('v1/ack')).timeout(requestTimeout);
+      req.headers.contentType = ContentType.json;
+      req.add(utf8.encode(jsonEncode({
+        'items': [
+          {'m': it.mailbox, 'i': it.id},
+        ],
+      })));
+      final res = await req.close().timeout(requestTimeout);
+      await res.drain<void>().timeout(requestTimeout);
+      if (res.statusCode != 204) throw HttpException('ack ${res.statusCode}');
+      _unconfirmed.remove(key);
+    } catch (_) {
+      // The relay still has it. Allow it to be shown (and confirmed) again, but not at once:
+      // the app drops repeats by itself.
+      if (!_closed) Timer(backoffMax, () => _unconfirmed.remove(key));
+    }
   }
 }
 

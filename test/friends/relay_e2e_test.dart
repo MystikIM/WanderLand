@@ -77,7 +77,6 @@ void main() {
     await a.c.sendMessage(friendId: a.c.friends.single.id, text: 'sent while the relay is down');
     expect(a.c.messagesWith(a.c.friends.single.id).single.state, DeliveryState.queued);
     await boot(port: port);
-    await a.c.flush(); // the app does this whenever the connection comes back
     await eventually(() async => b.c.messagesWith(b.c.friends.single.id).length == 1);
     await eventually(() async => a.c.messagesWith(a.c.friends.single.id).single.state == DeliveryState.delivered);
   });

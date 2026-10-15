@@ -34,6 +34,10 @@ class MailStore {
   final Duration ttl;
   final Now _now;
   int _seq = 0;
+  int _lastStamp = 0;
+
+  /// Test hook: runs after a mailbox looks empty and just before it is tidied away.
+  Future<void> Function(String mailbox)? onSweepBeforeRemove;
 
   static final String _sep = Platform.pathSeparator;
 
@@ -72,23 +76,44 @@ class MailStore {
       if (await _mailboxCount() >= maxMailboxes) return PutResult.full;
       await box.create(recursive: true);
     }
-    if ((await _files(box)).length >= maxPerMailbox) return PutResult.full;
-    final stamp = _now().microsecondsSinceEpoch.toString().padLeft(16, '0');
-    final id = '$stamp-${(_seq++ % 1000000).toString().padLeft(6, '0')}';
-    final tmp = File('${box.path}$_sep$id.tmp');
-    await tmp.writeAsBytes(bytes, flush: true);
-    await tmp.rename('${box.path}$_sep$id.msg');
-    return PutResult.ok;
+    final existing = await _files(box);
+    if (existing.length >= maxPerMailbox) return PutResult.full;
+    // Never let the clock (or a step backwards) reorder mail: each stamp is later than the last.
+    var stamp = _now().microsecondsSinceEpoch;
+    if (stamp <= _lastStamp) stamp = _lastStamp + 1;
+    if (existing.isNotEmpty) {
+      final newest = int.tryParse(_idOf(existing.last).split('-').first) ?? 0;
+      if (stamp <= newest) stamp = newest + 1;
+    }
+    _lastStamp = stamp;
+    final id = '${stamp.toString().padLeft(16, '0')}-${(_seq++ % 1000000).toString().padLeft(6, '0')}';
+    for (var attempt = 0;; attempt++) {
+      try {
+        final tmp = File('${box.path}$_sep$id.tmp');
+        await tmp.writeAsBytes(bytes, flush: true);
+        await tmp.rename('${box.path}$_sep$id.msg');
+        return PutResult.ok;
+      } on FileSystemException {
+        // the mailbox folder was tidied away a moment ago: make it again, once
+        if (attempt >= 1) rethrow;
+        await box.create(recursive: true);
+      }
+    }
   }
 
   /// Oldest first, without removing anything. Remove with [ack] once it is safely received.
-  Future<List<MailItem>> peek(Iterable<String> mailboxes, {int perMailbox = 50}) async {
+  /// Stops reading once [maxBytes] have been collected (always at least one message if any wait).
+  Future<List<MailItem>> peek(Iterable<String> mailboxes, {int perMailbox = 50, int? maxBytes}) async {
     final out = <MailItem>[];
+    var total = 0;
     for (final m in mailboxes) {
       final files = await _files(_box(m));
       for (final f in files.take(perMailbox)) {
+        if (maxBytes != null && total >= maxBytes) return out;
         try {
-          out.add(MailItem(m, _idOf(f), await f.readAsBytes()));
+          final bytes = await f.readAsBytes();
+          total += bytes.length;
+          out.add(MailItem(m, _idOf(f), bytes));
         } on FileSystemException {
           // acknowledged by someone else a moment ago: nothing to deliver
         }
@@ -121,17 +146,28 @@ class MailStore {
       if (e is! Directory) continue;
       final name = e.uri.pathSegments.where((s) => s.isNotEmpty).last;
       if (!mailboxPattern.hasMatch(name)) continue;
-      for (final ext in ['.msg', '.tmp']) {
-        for (final f in await _files(e, ext: ext)) {
-          final stamp = int.tryParse(_idOf(f).split('-').first) ?? 0;
-          if (stamp < cutoff) {
-            await f.delete();
-            if (ext == '.msg') removed++;
+      // One bad mailbox (for example one a friend just removed) never stops the rest.
+      try {
+        for (final ext in ['.msg', '.tmp']) {
+          for (final f in await _files(e, ext: ext)) {
+            final stamp = int.tryParse(_idOf(f).split('-').first) ?? 0;
+            if (stamp < cutoff) {
+              try {
+                await f.delete();
+                if (ext == '.msg') removed++;
+              } on FileSystemException {
+                // already gone
+              }
+            }
           }
         }
-      }
-      if ((await _files(e)).isEmpty && (await _files(e, ext: '.tmp')).isEmpty) {
-        await e.delete(recursive: true);
+        if ((await _files(e)).isEmpty && (await _files(e, ext: '.tmp')).isEmpty) {
+          await onSweepBeforeRemove?.call(name);
+          // Not recursive on purpose: if mail landed a moment ago this refuses instead of deleting it.
+          await e.delete();
+        }
+      } on FileSystemException {
+        // gone, or no longer empty: leave it for the next sweep
       }
     }
     return removed;

@@ -54,7 +54,7 @@ void main() {
     final a = make();
     final b = make();
     final got = <Envelope>[];
-    b.incoming.listen(got.add);
+    b.incoming.listen((e) { got.add(e); e.onHandled?.call(); });
     await b.listenOn(box(1));
     expect(await a.send(env(box(1), [1, 2, 3])), isTrue);
     await eventually(() async => got.length == 1);
@@ -69,7 +69,7 @@ void main() {
     await a.send(env(box(1), [1]));
     await a.send(env(box(1), [2]));
     final got = <int>[];
-    b.incoming.listen((e) => got.add(e.bytes.single));
+    b.incoming.listen((e) { got.add(e.bytes.single); e.onHandled?.call(); });
     await b.listenOn(box(1));
     await eventually(() async => got.length == 2);
     expect(got, [1, 2]);
@@ -79,7 +79,7 @@ void main() {
     final a = make();
     final b = make();
     final got = <String>[];
-    b.incoming.listen((e) => got.add(e.mailbox));
+    b.incoming.listen((e) { got.add(e.mailbox); e.onHandled?.call(); });
     for (var i = 0; i < 100; i++) {
       await b.listenOn(box(i));
     }
@@ -91,7 +91,7 @@ void main() {
     final a = make();
     final b = make();
     final got = <Envelope>[];
-    b.incoming.listen(got.add);
+    b.incoming.listen((e) { got.add(e); e.onHandled?.call(); });
     await b.listenOn(box(1));
     await b.forget(box(1));
     await a.send(env(box(1), [1]));
@@ -103,6 +103,7 @@ void main() {
   test('drop deletes the mailbox on the relay as well', () async {
     final a = make();
     await a.send(env(box(1), [1]));
+    await a.listenOn(box(1)); // chat is on: the app is listening to this friend
     await a.drop(box(1));
     await eventually(() async => (await store.peek([box(1)])).isEmpty);
   });
@@ -111,7 +112,7 @@ void main() {
     final a = make();
     final b = make();
     final got = <Envelope>[];
-    b.incoming.listen(got.add);
+    b.incoming.listen((e) { got.add(e); e.onHandled?.call(); });
     await b.listenOn(box(1));
     await b.listenOn(box(2));
     await a.send(env(box(1), [1]));
@@ -137,7 +138,7 @@ void main() {
     final a = make();
     final b = make();
     final got = <int>[];
-    b.incoming.listen((e) => got.add(e.bytes.single));
+    b.incoming.listen((e) { got.add(e.bytes.single); e.onHandled?.call(); });
     await b.listenOn(box(1));
     await eventually(() async => b.online);
     final port = server.port;

@@ -16,12 +16,21 @@ Future<void> main(List<String> args) async {
   await data.create(recursive: true);
 
   final store = MailStore(data);
-  final server = RelayServer(store);
+  // --behind-proxy: trust the real address a tunnel passes along (only if the relay is not reachable directly).
+  final server = RelayServer(store, trustForwardedIp: args.contains('--behind-proxy'));
   await server.start(address: InternetAddress(bind), port: port);
   stdout.writeln('WanderLand relay listening on $bind:${server.port}, mail kept in ${data.path}');
 
-  await store.sweep();
-  Timer.periodic(const Duration(hours: 1), (_) => store.sweep());
+  Future<void> tidy() async {
+    try {
+      await store.sweep();
+    } catch (_) {
+      // a failed tidy-up must never stop the relay; it tries again next hour
+    }
+  }
+
+  await tidy();
+  Timer.periodic(const Duration(hours: 1), (_) => tidy());
 
   Future<void> stop(ProcessSignal _) async {
     await server.close();
