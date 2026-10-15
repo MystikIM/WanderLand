@@ -50,3 +50,6 @@ android/key.properties
 *.jks
 *.keystore
 sqlite3.dll
+
+# release output
+dist/
