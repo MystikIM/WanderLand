@@ -1,3 +1,4 @@
+import 'package:flutter_test/flutter_test.dart';
 import 'package:plural_app/controllers/friends_controller.dart';
 import 'package:plural_app/data/doc_store.dart';
 import 'package:plural_app/domain/models.dart';
@@ -153,4 +154,14 @@ Future<void> befriend(Phone asker, Phone shower) async {
   await settle([asker, shower]);
   await shower.c.acceptRequest(shower.c.pendingRequests.single.id);
   await settle([asker, shower]);
+}
+
+/// For real-network tests: wait (briefly) until something becomes true.
+Future<void> eventually(Future<bool> Function() ok, {Duration timeout = const Duration(seconds: 8)}) async {
+  final end = DateTime.now().add(timeout);
+  while (DateTime.now().isBefore(end)) {
+    if (await ok()) return;
+    await Future<void>.delayed(const Duration(milliseconds: 25));
+  }
+  fail('timed out waiting for something to happen');
 }
