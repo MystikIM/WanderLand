@@ -129,3 +129,21 @@ class Phone {
     await c.load();
   }
 }
+
+/// Let every phone finish handling what it received, including replies.
+Future<void> settle(Iterable<Phone> phones) async {
+  for (var round = 0; round < 5; round++) {
+    for (final p in phones) {
+      await p.c.idle;
+    }
+  }
+}
+
+/// [asker] scans [shower]'s code and [shower] accepts. Both end up friends.
+Future<void> befriend(Phone asker, Phone shower) async {
+  final code = await shower.c.myCode();
+  await asker.c.addFromCode(code);
+  await settle([asker, shower]);
+  await shower.c.acceptRequest(shower.c.pendingRequests.single.id);
+  await settle([asker, shower]);
+}
