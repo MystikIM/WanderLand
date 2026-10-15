@@ -5,10 +5,6 @@ const String appTagline = 'A multi plural system manager / chaos crunch';
 
 // The dedication. Edit the words here and they change everywhere.
 // Only nicknames, never real names. Credit is the studio, not a person.
-// It is a quote from the film, so it is in quotation marks and credits its source.
-const String dedicationMotto1 = '“Ohana means family.';
-const String dedicationMotto2 = 'Family means nobody gets left behind or forgotten.”';
-const String dedicationQuoteFrom = '— from Lilo & Stitch';
 const String dedicationTo =
     'Made with love for The Zoo and Joker_Wolf, and for every system out there.';
 const String madeBy = 'Made by MystikIM';

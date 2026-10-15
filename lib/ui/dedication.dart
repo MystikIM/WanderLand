@@ -61,14 +61,9 @@ class _DedicationCardState extends State<DedicationCard> {
             Padding(
               padding: const EdgeInsets.fromLTRB(18, 22, 18, 0),
               child: Column(mainAxisSize: MainAxisSize.min, children: [
-                Text(dedicationMotto1, textAlign: TextAlign.center, style: _sticker(26)),
-                const SizedBox(height: 6),
-                Text(dedicationMotto2, textAlign: TextAlign.center, style: _sticker(18, weight: FontWeight.w600)),
+                Text(appName, textAlign: TextAlign.center, style: _sticker(28)),
                 const SizedBox(height: 4),
-                Text(dedicationQuoteFrom,
-                    key: const Key('dedication-quote-from'),
-                    textAlign: TextAlign.center,
-                    style: _sticker(12, weight: FontWeight.w600)),
+                Text(appDescriptor, textAlign: TextAlign.center, style: _sticker(16, weight: FontWeight.w600)),
                 const SizedBox(height: 14),
               ]),
             ),

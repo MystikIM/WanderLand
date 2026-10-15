@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:plural_app/app_info.dart';
 import 'package:plural_app/controllers/alter_controller.dart';
 import 'package:plural_app/controllers/buddy_controller.dart';
 import 'package:plural_app/controllers/chat_controller.dart';
@@ -39,14 +38,11 @@ void main() {
     );
   }
 
-  testWidgets('the About page shows the dedication with the motto and the nicknames only', (tester) async {
+  testWidgets('the About page shows the dedication with the nicknames only, and no borrowed film quote', (tester) async {
     final (_, p) = await env();
     await pumpScreen(tester, const DedicationScreen(), providers: p);
-    expect(find.text(dedicationMotto1), findsOneWidget);
-    expect(find.text(dedicationMotto2), findsOneWidget);
-    expect(find.byKey(const Key('dedication-quote-from')), findsOneWidget);
-    expect(dedicationMotto1, startsWith('“'));
-    expect(dedicationMotto2, endsWith('”'));
+    expect(find.textContaining('hana'), findsNothing);
+    expect(find.textContaining('Lilo'), findsNothing);
     expect(find.textContaining('The Zoo and Joker_Wolf'), findsOneWidget);
     expect(find.textContaining('MystikIM'), findsOneWidget);
     expect(find.byKey(const Key('dedication-wolf')), findsOneWidget);
