@@ -2,10 +2,35 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:plural_app/friends/friend_models.dart';
+import 'package:plural_app/friends/qr_photo_source.dart';
+import 'package:plural_app/friends/qr_reader.dart';
 import 'package:plural_app/ui/friends/add_friend_screen.dart';
 import '../../helpers/friends_harness.dart';
 import '../../helpers/friends_ui_env.dart';
 import '../../helpers/harness.dart';
+
+class FakePhotos implements QrPhotoSource {
+  FakePhotos({this.camera, this.gallery});
+  final Uint8List? camera;
+  final Uint8List? gallery;
+  @override
+  Future<Uint8List?> takePhoto() async => camera;
+  @override
+  Future<Uint8List?> pickPicture() async => gallery;
+}
+
+class FakeReader implements QrReader {
+  FakeReader(this.answer);
+  final String? answer;
+  Uint8List? saw;
+  @override
+  Future<String?> decode(Uint8List b) async {
+    saw = b;
+    return answer;
+  }
+}
+
+final pic = Uint8List.fromList([1, 2, 3]);
 
 void main() {
   testWidgets('Show my code makes a code once, shows it as text and as a QR, and it can be copied', (tester) async {
@@ -86,5 +111,63 @@ void main() {
     expect(find.byKey(const Key('friends-show-code')), findsNothing);
     expect(find.byKey(const Key('friends-add-go')), findsNothing);
     expect(find.textContaining('grown-up'), findsOneWidget);
+  });
+
+  testWidgets('taking a photo of their QR sends the request', (tester) async {
+    final env = await uiEnv();
+    final code = await env.peer.c.myCode();
+    final reader = FakeReader(code);
+    await pumpScreen(tester, AddFriendScreen(photos: FakePhotos(camera: pic), reader: reader), providers: env.providers);
+    await tester.tap(find.byKey(const Key('friends-scan-camera')));
+    await tester.pumpAndSettle();
+    expect(reader.saw, pic);
+    expect(env.friends.friends.single.state, FriendState.pendingOut);
+    expect(find.textContaining('Request sent to bravo'), findsOneWidget);
+  });
+
+  testWidgets('a picture from the gallery works the same way', (tester) async {
+    final env = await uiEnv();
+    final code = await env.peer.c.myCode();
+    await pumpScreen(tester, AddFriendScreen(photos: FakePhotos(gallery: pic), reader: FakeReader(code)), providers: env.providers);
+    await tester.tap(find.byKey(const Key('friends-scan-gallery')));
+    await tester.pumpAndSettle();
+    expect(env.friends.friends.single.theirUsername, 'bravo');
+  });
+
+  testWidgets('a picture with no readable QR says so in plain words and adds nobody', (tester) async {
+    final env = await uiEnv();
+    await pumpScreen(tester, AddFriendScreen(photos: FakePhotos(camera: pic), reader: FakeReader(null)), providers: env.providers);
+    await tester.tap(find.byKey(const Key('friends-scan-camera')));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('could not find a QR code'), findsOneWidget);
+    expect(env.friends.friends, isEmpty);
+  });
+
+  testWidgets('backing out of the camera does nothing and says nothing', (tester) async {
+    final env = await uiEnv();
+    await pumpScreen(tester, AddFriendScreen(photos: FakePhotos(), reader: FakeReader('x')), providers: env.providers);
+    await tester.tap(find.byKey(const Key('friends-scan-camera')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('friends-add-problem')), findsNothing);
+    expect(env.friends.friends, isEmpty);
+  });
+
+  testWidgets('REVIEW FOCUS: a QR that is not a friend code gives a plain sentence', (tester) async {
+    final env = await uiEnv();
+    await pumpScreen(tester, AddFriendScreen(photos: FakePhotos(camera: pic), reader: FakeReader('https://example.com')), providers: env.providers);
+    await tester.tap(find.byKey(const Key('friends-scan-camera')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('friends-add-problem')), findsOneWidget);
+    expect(find.textContaining('Exception'), findsNothing);
+    expect(env.friends.friends, isEmpty);
+  });
+
+  testWidgets('REVIEW FOCUS: scanning my own QR gives a plain sentence', (tester) async {
+    final env = await uiEnv();
+    final own = await env.friends.myCode();
+    await pumpScreen(tester, AddFriendScreen(photos: FakePhotos(camera: pic), reader: FakeReader(own)), providers: env.providers);
+    await tester.tap(find.byKey(const Key('friends-scan-camera')));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('your own'), findsOneWidget);
   });
 }

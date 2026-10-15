@@ -5,11 +5,18 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../controllers/friends_controller.dart';
 import '../../domain/little.dart';
+import '../../friends/qr_photo_source.dart';
+import '../../friends/qr_reader.dart';
 import '../little_scope.dart';
 import 'friend_text.dart';
 
 class AddFriendScreen extends StatefulWidget {
-  const AddFriendScreen({super.key});
+  const AddFriendScreen({super.key, this.photos, this.reader});
+
+  /// Where pictures come from, and who reads them. Only tests pass these.
+  final QrPhotoSource? photos;
+  final QrReader? reader;
+
   @override
   State<AddFriendScreen> createState() => _AddFriendScreenState();
 }
@@ -19,6 +26,8 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
   String? _myCode;
   String? _problem;
   String? _sentTo;
+  late final QrPhotoSource _photos = widget.photos ?? DevicePhotoSource();
+  late final QrReader _reader = widget.reader ?? ZxingQrReader();
 
   @override
   void dispose() {
@@ -53,6 +62,29 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
         });
       }
     }
+  }
+
+  /// A picture of a friend's QR: read it, then add them exactly as if the code had been pasted.
+  Future<void> _fromPicture(Future<Uint8List?> Function() get) async {
+    Uint8List? bytes;
+    try {
+      bytes = await get();
+    } catch (_) {
+      if (mounted) setState(() => _problem = 'The camera or pictures could not be opened. Try again, or paste the code instead.');
+      return;
+    }
+    if (bytes == null || !mounted) return;
+    final text = await _reader.decode(bytes);
+    if (!mounted) return;
+    if (text == null) {
+      setState(() {
+        _sentTo = null;
+        _problem = 'I could not find a QR code in that picture. Try again with the whole code in view, close and steady.';
+      });
+      return;
+    }
+    _input.text = text;
+    await _add();
   }
 
   @override
@@ -105,6 +137,21 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                 maxLines: 4,
                 decoration: const InputDecoration(labelText: 'Paste the code here'),
               ),
+              const SizedBox(height: 8),
+              Wrap(spacing: 8, children: [
+                OutlinedButton.icon(
+                  key: const Key('friends-scan-camera'),
+                  icon: const Icon(Icons.photo_camera),
+                  label: const Text('Take a photo of their QR'),
+                  onPressed: () => _fromPicture(_photos.takePhoto),
+                ),
+                OutlinedButton.icon(
+                  key: const Key('friends-scan-gallery'),
+                  icon: const Icon(Icons.photo_library),
+                  label: const Text('Pick a picture'),
+                  onPressed: () => _fromPicture(_photos.pickPicture),
+                ),
+              ]),
               const SizedBox(height: 8),
               FilledButton(key: const Key('friends-add-go'), onPressed: _add, child: const Text('Send friend request')),
               if (_problem != null)
