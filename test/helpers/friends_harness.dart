@@ -1,9 +1,11 @@
+import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:plural_app/controllers/friends_controller.dart';
 import 'package:plural_app/data/doc_store.dart';
 import 'package:plural_app/domain/models.dart';
 import 'package:plural_app/friends/secret_store.dart';
 import 'dart:async';
+import 'package:plural_app/friends/relay_transport.dart';
 import 'package:plural_app/friends/transport.dart';
 
 /// A pretend relay: holds mail for mailboxes nobody is listening on yet.
@@ -164,4 +166,72 @@ Future<void> eventually(Future<bool> Function() ok, {Duration timeout = const Du
     await Future<void>.delayed(const Duration(milliseconds: 25));
   }
   fail('timed out waiting for something to happen');
+}
+
+RelayTransport _testRelay(Uri base) => RelayTransport(
+      base,
+      pollWait: const Duration(seconds: 1),
+      backoffMin: const Duration(milliseconds: 50),
+      backoffMax: const Duration(milliseconds: 200),
+      requestTimeout: const Duration(seconds: 3),
+    );
+
+/// A pretend phone that really talks to a relay over HTTP.
+class RelayPhone {
+  RelayPhone(this.base) {
+    store = MemoryDocStore();
+    secrets = MemorySecretStore();
+    transport = _testRelay(base);
+    c = _controller();
+  }
+
+  final Uri base;
+  DateTime now = DateTime(2026, 10, 15, 9);
+  late final MemoryDocStore store;
+  late final MemorySecretStore secrets;
+  late RelayTransport transport;
+  late FriendsController c;
+
+  FriendsController _controller() => FriendsController(
+        store: store,
+        secrets: secrets,
+        transport: transport,
+        frontOut: () => const [],
+        alterById: (_) => null,
+        littleLocked: () => false,
+        clock: () => now = now.add(const Duration(milliseconds: 1)),
+      );
+
+  static Future<RelayPhone> on(Uri base, {String username = 'zed'}) async {
+    final p = RelayPhone(base);
+    await p.c.load();
+    await p.c.enable(username: username);
+    return p;
+  }
+
+  /// The app closed and opened again: same database and keys, a fresh connection.
+  Future<void> restart() async {
+    c.dispose();
+    await transport.close();
+    transport = _testRelay(base);
+    c = _controller();
+    await c.load();
+  }
+
+  Future<void> close() async {
+    c.dispose();
+    await transport.close();
+  }
+}
+
+/// Windows can hold a file open for a moment after a server stops; try a few times.
+Future<void> deleteDirSoon(Directory dir) async {
+  for (var i = 0; i < 20; i++) {
+    try {
+      if (await dir.exists()) await dir.delete(recursive: true);
+      return;
+    } on FileSystemException {
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+    }
+  }
 }

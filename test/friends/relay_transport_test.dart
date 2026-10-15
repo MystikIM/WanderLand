@@ -47,7 +47,7 @@ void main() {
     }
     made.clear();
     await server.close();
-    await dir.delete(recursive: true);
+    await deleteDirSoon(dir);
   });
 
   test('mail sent by one phone arrives at the phone listening, and is then removed from the relay', () async {
