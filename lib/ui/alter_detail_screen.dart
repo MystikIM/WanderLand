@@ -47,6 +47,7 @@ class AlterDetailScreen extends StatelessWidget {
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(a.name, style: Theme.of(context).textTheme.headlineSmall),
+              if (a.kind.isNotEmpty) Text(a.kind, key: const Key('alter-kind-label')),
               if (a.pronouns.isNotEmpty) Text(a.pronouns),
               if (littleLevelOf(a) != LittleLevel.none)
                 Chip(

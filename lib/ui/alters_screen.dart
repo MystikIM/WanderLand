@@ -4,8 +4,10 @@ import 'package:provider/provider.dart';
 import '../controllers/alter_controller.dart';
 import '../controllers/settings_controller.dart';
 import '../data/image_store.dart';
+import '../domain/alter_kinds.dart';
 import '../domain/models.dart';
 import 'alter_detail_screen.dart';
+import 'alter_frames.dart';
 import 'alter_edit_screen.dart';
 
 class AlterAvatar extends StatelessWidget {
@@ -13,8 +15,7 @@ class AlterAvatar extends StatelessWidget {
   final Alter alter;
   final double radius;
 
-  @override
-  Widget build(BuildContext context) {
+  Widget _circle(BuildContext context) {
     final rel = alter.imagePath;
     if (rel != null) {
       final f = context.read<ImageStore>().resolve(rel);
@@ -29,6 +30,24 @@ class AlterAvatar extends StatelessWidget {
       radius: radius,
       backgroundColor: Color(alter.colorValue),
       child: Text(initial, style: TextStyle(fontSize: radius * 0.9, color: Colors.white)),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final circle = _circle(context);
+    final kind = frameFor(alter.kind);
+    if (kind == null) return circle;
+    // Non-human alters get a cartoony frame (ears, horns, wings...) around the picture.
+    final d = radius * 2;
+    return SizedBox(
+      width: d,
+      height: d,
+      child: Stack(clipBehavior: Clip.none, alignment: Alignment.center, children: [
+        Positioned.fill(child: CustomPaint(painter: AlterFramePainter(kind, behind: true))),
+        circle,
+        Positioned.fill(child: CustomPaint(painter: AlterFramePainter(kind, behind: false))),
+      ]),
     );
   }
 }
@@ -80,7 +99,7 @@ class _AltersScreenState extends State<AltersScreen> {
                 ListTile(
                   leading: AlterAvatar(alter: a),
                   title: Text(a.name),
-                  subtitle: Text([a.pronouns, a.role].where((s) => s.isNotEmpty).join(' · ')),
+                  subtitle: Text([a.kind, a.pronouns, a.role].where((s) => s.isNotEmpty).join(' · ')),
                   trailing: a.archived ? const Icon(Icons.archive_outlined) : null,
                   onTap: () => Navigator.of(context).push(MaterialPageRoute(
                       builder: (_) => AlterDetailScreen(alterId: a.id))),

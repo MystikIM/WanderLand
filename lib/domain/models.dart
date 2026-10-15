@@ -17,9 +17,11 @@ class Alter {
     this.customFields = const {},
     this.ageYears,
     this.littleMode = 'auto',
+    this.kind = '',
   });
 
   final String id;
+  final String kind;
   final String name;
   final DateTime createdAt;
   final int? ageYears;
@@ -52,9 +54,11 @@ class Alter {
     int? ageYears,
     bool clearAge = false,
     String? littleMode,
+    String? kind,
   }) =>
       Alter(
         id: id,
+        kind: kind ?? this.kind,
         createdAt: createdAt,
         ageYears: clearAge ? null : (ageYears ?? this.ageYears),
         littleMode: littleMode ?? this.littleMode,
@@ -87,6 +91,7 @@ class Alter {
         'customFields': customFields,
         'ageYears': ageYears,
         'littleMode': littleMode,
+        'kind': kind,
       };
 
   factory Alter.fromJson(Map<String, dynamic> j) => Alter(
@@ -105,6 +110,7 @@ class Alter {
         customFields: Map<String, String>.from(j['customFields'] as Map? ?? const {}),
         ageYears: j['ageYears'] as int?,
         littleMode: j['littleMode'] as String? ?? 'auto',
+        kind: j['kind'] as String? ?? '',
       );
 }
 

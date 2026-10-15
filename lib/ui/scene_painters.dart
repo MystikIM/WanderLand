@@ -360,6 +360,114 @@ class PiecePainter extends CustomPainter {
         _o(c, leaf, const Color(0xFF7E57C2), wobble: .004);
         c.drawCircle(Offset(w * .40, h * .70), w * .018, _p(const Color(0xFFFFE680)));
         _rr(c, Rect.fromLTWH(w * .26, h * .93, w * .48, h * .05), w * .01, const Color(0xFFFF4D8D), wobble: .004);
+      case 'den':
+        // a cosy earth mound with a dark doorway and two eyes peeking out
+        final mound = Path()
+          ..moveTo(w * .02, h * .93)
+          ..quadraticBezierTo(w * .05, h * .28, w * .50, h * .26)
+          ..quadraticBezierTo(w * .95, h * .28, w * .98, h * .93)
+          ..close();
+        _o(c, mound, _c(const Color(0xFFA9714B)), wobble: .01);
+        final grass = Path()
+          ..moveTo(w * .14, h * .40)
+          ..quadraticBezierTo(w * .50, h * .14, w * .86, h * .40)
+          ..quadraticBezierTo(w * .70, h * .34, w * .60, h * .38)
+          ..quadraticBezierTo(w * .50, h * .32, w * .40, h * .38)
+          ..quadraticBezierTo(w * .28, h * .34, w * .14, h * .40)
+          ..close();
+        _o(c, grass, const Color(0xFF4CD964), wobble: .006);
+        final hole = Path()
+          ..moveTo(w * .30, h * .93)
+          ..lineTo(w * .30, h * .66)
+          ..arcToPoint(Offset(w * .70, h * .66), radius: Radius.circular(w * .20))
+          ..lineTo(w * .70, h * .93)
+          ..close();
+        c.drawPath(hole, _p(const Color(0xFF2B1B3D)));
+        c.drawPath(hole, _line);
+        for (final dx in [.43, .57]) {
+          c.drawOval(Rect.fromCenter(center: Offset(w * dx, h * .76), width: w * .08, height: w * .10), _p(const Color(0xFFFFE680)));
+          c.drawCircle(Offset(w * (dx + (giggle > 0 ? 0 : -.01)), h * .77), w * .018, _p(_ink));
+        }
+        for (final o in [Offset(.18, .82), Offset(.80, .86), Offset(.86, .74)]) {
+          c.drawCircle(Offset(w * o.dx, h * o.dy), w * .025, _p(const Color(0x66000000)));
+        }
+        _sparkle(c, Offset(w * .78, h * .20), w * .05);
+      case 'nest':
+        // a woven twig nest with eggs, one hatching
+        for (final (dx, col) in const [(.30, 0xFFFFF1DC), (.52, 0xFFB3E5FC), (.72, 0xFFFFD6E8)]) {
+          _oval(c, Rect.fromCenter(center: Offset(w * dx, h * .50), width: w * .20, height: h * .26), Color(col), wobble: .004);
+          c.drawCircle(Offset(w * (dx - .03), h * .46), w * .014, _p(const Color(0x55000000)));
+          c.drawCircle(Offset(w * (dx + .03), h * .54), w * .012, _p(const Color(0x55000000)));
+        }
+        // a little chick peeking from the middle egg
+        _oval(c, Rect.fromCenter(center: Offset(w * .52, h * .34), width: w * .20, height: h * .18), const Color(0xFFFFE14D), wobble: .004);
+        _face(c, Offset(w * .52, h * .33), w * .035, smile: .03);
+        _o(c, Path()..moveTo(w * .50, h * .365)..lineTo(w * .54, h * .365)..lineTo(w * .52, h * .40)..close(), const Color(0xFFFFB347));
+        final bowl = Path()
+          ..moveTo(w * .06, h * .52)
+          ..quadraticBezierTo(w * .50, h * 1.12, w * .94, h * .52)
+          ..quadraticBezierTo(w * .50, h * .66, w * .06, h * .52)
+          ..close();
+        _o(c, bowl, _c(const Color(0xFFB07A4A)), wobble: .01);
+        for (final (x0, y0, x1, y1) in const [(.18, .62, .40, .70), (.46, .70, .72, .64), (.28, .74, .62, .82), (.60, .60, .84, .58)]) {
+          c.drawLine(Offset(w * x0, h * y0), Offset(w * x1, h * y1), _stroke(w * .022, const Color(0xFF6D4328)));
+        }
+        _sparkle(c, Offset(w * .16, h * .30), w * .05);
+      case 'cauldron':
+        // a grinning witch's pot with bubbling green potion
+        final steam = _stroke(w * .03, const Color(0xAAFFFFFF));
+        c.drawPath(Path()..moveTo(w * .36, h * .24)..cubicTo(w * .28, h * .16, w * .46, h * .10, w * .38, h * .02), steam);
+        c.drawPath(Path()..moveTo(w * .62, h * .26)..cubicTo(w * .54, h * .18, w * .72, h * .12, w * .64, h * .05), steam);
+        for (final dx in [.24, .50, .76]) {
+          c.drawOval(Rect.fromCenter(center: Offset(w * dx, h * .90), width: w * .15, height: h * .12), _p(const Color(0xFFFF8A3D)));
+        }
+        for (final dx in [.28, .72]) {
+          _rr(c, Rect.fromCenter(center: Offset(w * dx, h * .86), width: w * .10, height: h * .14), w * .03, const Color(0xFF3A2B55));
+        }
+        _oval(c, Rect.fromLTWH(w * .10, h * .36, w * .80, h * .52), _c(const Color(0xFF3A2B55)), wobble: .008);
+        _shine(c, Rect.fromLTWH(w * .20, h * .46, w * .12, h * .16));
+        _oval(c, Rect.fromLTWH(w * .06, h * .28, w * .88, h * .20), const Color(0xFF5A4580), wobble: .006);
+        c.drawOval(Rect.fromLTWH(w * .14, h * .32, w * .72, h * .12), _p(const Color(0xFF7CFF6B)));
+        for (final (dx, dy, r) in const [(.34, .30, .05), (.58, .27, .06), (.70, .33, .035)]) {
+          c.drawCircle(Offset(w * dx, h * dy), w * r, _p(const Color(0xFFB8FFA8)));
+          c.drawCircle(Offset(w * dx, h * dy), w * r, _stroke(w * .014));
+        }
+        _face(c, Offset(w * .50, h * .62), w * .09, smile: .16);
+      case 'castle':
+        // a fairytale castle with flags and glowing windows
+        void tower(double x, double top, double width, Color col) {
+          _rr(c, Rect.fromLTWH(w * x, h * top, w * width, h * (.92 - top)), w * .01, col, wobble: .006);
+          final capL = w * (x - .02), capR = w * (x + width + .02);
+          _o(c, Path()..moveTo(capL, h * top)..lineTo(w * (x + width / 2), h * (top - .16))..lineTo(capR, h * top)..close(), const Color(0xFFFF4D8D), wobble: .005);
+          c.drawLine(Offset(w * (x + width / 2), h * (top - .16)), Offset(w * (x + width / 2), h * (top - .26)), _stroke(w * .02));
+          c.drawPath(
+            Path()
+              ..moveTo(w * (x + width / 2), h * (top - .26))
+              ..lineTo(w * (x + width / 2 + .09), h * (top - .22))
+              ..lineTo(w * (x + width / 2), h * (top - .18))
+              ..close(),
+            _p(const Color(0xFFFFE680)),
+          );
+          c.drawOval(Rect.fromCenter(center: Offset(w * (x + width / 2), h * (top + .12)), width: w * .06, height: h * .09), _p(const Color(0xFFFFF3A6)));
+          c.drawOval(Rect.fromCenter(center: Offset(w * (x + width / 2), h * (top + .12)), width: w * .06, height: h * .09), _stroke(w * .014));
+        }
+        tower(.08, .46, .20, const Color(0xFFC9B6FF));
+        tower(.72, .40, .20, const Color(0xFFC9B6FF));
+        _rr(c, Rect.fromLTWH(w * .22, h * .46, w * .56, h * .46), w * .01, _c(const Color(0xFFE2D6FF)), wobble: .006);
+        for (final x in [.24, .36, .48, .60, .72]) {
+          _rr(c, Rect.fromLTWH(w * x, h * .40, w * .06, h * .08), w * .005, const Color(0xFFE2D6FF), wobble: .003);
+        }
+        tower(.40, .24, .20, const Color(0xFFD7C9FF));
+        final gate = Path()
+          ..moveTo(w * .42, h * .92)
+          ..lineTo(w * .42, h * .74)
+          ..arcToPoint(Offset(w * .58, h * .74), radius: Radius.circular(w * .08))
+          ..lineTo(w * .58, h * .92)
+          ..close();
+        _o(c, gate, const Color(0xFF7E57C2), wobble: .004);
+        _face(c, Offset(w * .50, h * .58), w * .06, smile: .08);
+        _sparkle(c, Offset(w * .10, h * .22), w * .05);
+        _sparkle(c, Offset(w * .90, h * .20), w * .04);
     }
   }
 

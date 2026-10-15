@@ -97,6 +97,10 @@ const Map<String, List<String>> kLexicon = {
   'moon': ['moon', 'night', 'stars'],
   'flower': ['flower', 'flowers', 'garden', 'meadow'],
   'door': ['door', 'doors', 'gate', 'portal'],
+  'den': ['den', 'burrow', 'lair', 'cave'],
+  'nest': ['nest', 'nests'],
+  'cauldron': ['cauldron', 'potion', 'potions', 'brew'],
+  'castle': ['castle', 'castles', 'tower', 'palace'],
 };
 
 /// Where each kind first appears, as fractions of the scene (x across, y down).
@@ -109,6 +113,10 @@ const Map<String, (double, double)> kAnchors = {
   'moon': (0.15, 0.12),
   'flower': (0.30, 0.85),
   'door': (0.92, 0.55),
+  'den': (0.10, 0.90),
+  'nest': (0.30, 0.48),
+  'cauldron': (0.88, 0.86),
+  'castle': (0.66, 0.28),
 };
 
 double growScale(int mentions) {

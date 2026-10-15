@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../controllers/alter_controller.dart';
 import '../controllers/settings_controller.dart';
 import '../data/image_store.dart';
+import '../domain/alter_kinds.dart';
 import '../domain/little.dart';
 import '../domain/models.dart';
 import '../domain/pronouns.dart';
@@ -22,6 +23,7 @@ class _AlterEditScreenState extends State<AlterEditScreen> {
   late final _name = TextEditingController(text: widget.existing?.name ?? '');
   late final _pronouns = TextEditingController(text: widget.existing?.pronouns ?? '');
   late final _role = TextEditingController(text: widget.existing?.role ?? '');
+  late final _kind = TextEditingController(text: widget.existing?.kind ?? '');
   late final _bio = TextEditingController(text: widget.existing?.bio ?? '');
   late final _tags = TextEditingController(text: (widget.existing?.tags ?? []).join(', '));
   late final _groups = TextEditingController(text: (widget.existing?.groups ?? []).join(', '));
@@ -73,6 +75,7 @@ class _AlterEditScreenState extends State<AlterEditScreen> {
       name: _name.text.trim(),
       pronouns: _pronouns.text.trim(),
       role: _role.text.trim(),
+      kind: _kind.text.trim(),
       colorValue: _color,
       bio: _bio.text,
       imagePath: _image,
@@ -156,6 +159,27 @@ class _AlterEditScreenState extends State<AlterEditScreen> {
         ),
         const SizedBox(height: 12),
         TextField(controller: _role, decoration: const InputDecoration(labelText: 'Role')),
+        const SizedBox(height: 12),
+        const Text('What are they? (optional)'),
+        const SizedBox(height: 4),
+        Wrap(spacing: 8, runSpacing: 4, children: [
+          for (final k in kAlterKinds)
+            ChoiceChip(
+              key: Key('kind-$k'),
+              label: Text(k),
+              selected: _kind.text.trim().toLowerCase() == k,
+              onSelected: (on) => setState(() => _kind.text = on ? k : ''),
+            ),
+        ]),
+        const SizedBox(height: 8),
+        TextField(
+          key: const Key('alter-kind'),
+          controller: _kind,
+          onChanged: (_) => setState(() {}),
+          decoration: const InputDecoration(
+            labelText: 'Or write your own (a fox, a star, a shadow...)',
+          ),
+        ),
         const SizedBox(height: 12),
         TextField(
           key: const Key('alter-age'),
