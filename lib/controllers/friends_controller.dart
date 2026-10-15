@@ -38,9 +38,7 @@ class FriendsController extends ChangeNotifier {
   final DocStore _store;
   final SecretStore _secrets;
   final FriendTransport _transport;
-  // ignore: unused_field
   final FrontOut _frontOut;
-  // ignore: unused_field
   final Alter? Function(String id) _alterById;
   final bool Function() _littleLocked;
   final Clock _clock;
@@ -471,6 +469,96 @@ class FriendsController extends ChangeNotifier {
     if (id is String) await _markMessage(id, DeliveryState.delivered);
   }
 
+  // ---- per-friend settings and front sharing ----------------------------
+
+  Future<void> _change(String friendId, Friend Function(Friend f) edit) async {
+    final f = _friend(friendId);
+    if (f == null) throw StateError('That friend is gone.');
+    await _putFriend(edit(f));
+    notifyListeners();
+  }
+
+  Future<void> setNickname(String friendId, String nickname) => _exclusive(() => _setNickname(friendId, nickname));
+
+  Future<void> _setNickname(String friendId, String nickname) {
+    final n = nickname.trim();
+    return _change(friendId, (f) => f.copyWith(nickname: n.length > 40 ? n.substring(0, 40) : n));
+  }
+
+  /// Muting is about safety, so a little may always do it.
+  Future<void> setMuted(String friendId, bool muted) => _exclusive(() => _setMuted(friendId, muted));
+
+  Future<void> _setMuted(String friendId, bool muted) => _change(friendId, (f) => f.copyWith(muted: muted));
+
+  void _grownUpOnly(String what) {
+    if (locked) throw StateError('A grown-up alter needs to $what.');
+  }
+
+  Future<void> setShareFront(String friendId, bool on) => _exclusive(() => _setShareFront(friendId, on));
+
+  Future<void> _setShareFront(String friendId, bool on) async {
+    _grownUpOnly('change what friends can see');
+    await _change(friendId, (f) => f.copyWith(shareFront: on));
+    await _publishTo(_friend(friendId)!);
+  }
+
+  Future<void> setAllowedAlters(String friendId, Iterable<String> alterIds) =>
+      _exclusive(() => _setAllowedAlters(friendId, alterIds));
+
+  Future<void> _setAllowedAlters(String friendId, Iterable<String> alterIds) async {
+    _grownUpOnly('change what friends can see');
+    await _change(friendId, (f) => f.copyWith(allowedAlterIds: alterIds.toSet().toList()));
+    await _publishTo(_friend(friendId)!);
+  }
+
+  /// A grown-up decides which friends littles may chat with.
+  Future<void> setLittleOk(String friendId, bool ok) => _exclusive(() => _setLittleOk(friendId, ok));
+
+  Future<void> _setLittleOk(String friendId, bool ok) async {
+    _grownUpOnly('choose which friends littles can chat with');
+    await _change(friendId, (f) => f.copyWith(littleOk: ok));
+  }
+
+  /// Tell every friend who may see it who is out now. Call whenever the front changes.
+  Future<void> publishFront() => _exclusive(_publishFront);
+
+  Future<void> _publishFront() async {
+    if (!isOn) return;
+    for (final f in friends.where((f) => f.state == FriendState.friends)) {
+      await _publishTo(f);
+    }
+  }
+
+  /// Presence is best effort and never queued: a stale front is worse than none.
+  Future<void> _publishTo(Friend f) async {
+    if (!isOn || f.state != FriendState.friends) return;
+    final share = frontShareFor(f, _frontOut());
+    await _sendSealed(f,
+        type: 'presence',
+        body: share == null ? {'off': true} : share.toJson(),
+        toMailbox: f.outbox);
+  }
+
+  Future<void> _onPresence(Friend f, Map<String, dynamic> m) async {
+    if (f.state != FriendState.friends) return;
+    if (m['off'] == true) {
+      await _putFriend(f.copyWith(clearFront: true));
+      return;
+    }
+    final out = m['out'];
+    if (out is! List) return;
+    final alters = <TheirAlter>[];
+    for (final a in out.take(12)) {
+      if (a is Map && a['n'] is String && a['c'] is int) {
+        final name = (a['n'] as String).trim();
+        if (name.isEmpty) continue;
+        alters.add(TheirAlter(name.length > 60 ? name.substring(0, 60) : name, a['c'] as int));
+      }
+    }
+    await _putFriend(f.copyWith(
+        theirFront: TheirFront(alters: alters, someoneOut: m['some'] == true || out.length > alters.length)));
+  }
+
   // ---- receiving --------------------------------------------------------
 
   Future<void> _handle(Envelope e) async {
@@ -528,6 +616,8 @@ class FriendsController extends ChangeNotifier {
         await _onMessage(f, m);
       case 'ack':
         await _onAck(f, m);
+      case 'presence':
+        await _onPresence(f, m);
     }
 
     notifyListeners();
