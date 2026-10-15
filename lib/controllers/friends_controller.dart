@@ -9,6 +9,7 @@ import '../friends/friend_models.dart';
 import '../friends/secret_store.dart';
 import '../friends/transport.dart';
 import '../friends/wire.dart';
+import '../friends/sharing.dart';
 
 /// Alters who are out right now, primary first.
 typedef FrontOut = List<Alter> Function();
@@ -46,6 +47,10 @@ class FriendsController extends ChangeNotifier {
 
   ChatIdentity? identity;
   List<Friend> friends = const [];
+  List<FriendMessage> _messages = const [];
+
+  List<FriendMessage> messagesWith(String friendId) =>
+      _messages.where((m) => m.friendId == friendId).toList();
   IdentityKeys? _keys;
   StreamSubscription<Envelope>? _sub;
   Future<void> _inboxQueue = Future.value();
@@ -81,6 +86,8 @@ class FriendsController extends ChangeNotifier {
     final raw = await _store.get(identityCollection, ChatIdentity.docId);
     identity = raw == null ? null : ChatIdentity.fromJson(raw);
     friends = (await _store.all(friendsCollection)).map(Friend.fromJson).toList()
+      ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
+    _messages = (await _store.all(messagesCollection)).map(FriendMessage.fromJson).toList()
       ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
     _keys = null;
     notifyListeners();
@@ -263,8 +270,17 @@ class FriendsController extends ChangeNotifier {
     }
   }
 
+  Future<void> _putMessage(FriendMessage m) async {
+    await _store.put(messagesCollection, m.toJson());
+    _messages = [for (final x in _messages) if (x.id != m.id) x, m]
+      ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
+  }
+
+  /// Only ever moves a message forward: queued, then sent, then delivered.
   Future<void> _markMessage(String id, DeliveryState state) async {
-    // Filled in by the messaging task; requests only need the hook to exist.
+    final m = _messages.where((x) => x.id == id && x.outgoing).firstOrNull;
+    if (m == null || state.index <= m.state.index) return;
+    await _putMessage(m.copyWith(state: state));
   }
 
   /// Try again to hand over everything that is waiting (call when the connection is back).
@@ -364,6 +380,97 @@ class FriendsController extends ChangeNotifier {
     return (await FriendCrypto.derive(await _myKeys(), base64.decode(f.publicKey))).safetyNumber;
   }
 
+  // ---- messages ---------------------------------------------------------
+
+  Future<FriendMessage> sendMessage({
+    required String friendId,
+    required String text,
+    String? asAlterId,
+  }) =>
+      _exclusive(() => _sendMessage(friendId: friendId, text: text, asAlterId: asAlterId));
+
+  Future<FriendMessage> _sendMessage({
+    required String friendId,
+    required String text,
+    String? asAlterId,
+  }) async {
+    _requireOn();
+    final f = _friend(friendId);
+    if (f == null || f.state != FriendState.friends) {
+      throw StateError('You can only message people who are your friends.');
+    }
+    if (locked && !f.littleOk) {
+      throw StateError('Ask a grown-up alter to turn chat on for this friend first.');
+    }
+    final t = text.trim();
+    if (t.isEmpty) throw ArgumentError('Write something first.');
+    if (t.length > maxText) throw ArgumentError('That is too long. The most is $maxText characters.');
+    final who = asAlterId != null ? _alterById(asAlterId) : _frontOut().firstOrNull;
+    final speaker = speakerFor(f, who);
+    final now = _clock();
+    final id = IdGen.next(now);
+    var m = FriendMessage(
+      id: id,
+      friendId: f.id,
+      outgoing: true,
+      text: t,
+      createdAt: now,
+      state: DeliveryState.queued,
+      speakerName: speaker?.name,
+      speakerColor: speaker?.colorValue,
+    );
+    await _putMessage(m);
+    notifyListeners();
+    final sent = await _sendSealed(f,
+        type: 'msg',
+        body: {'id': id, 'x': t, if (speaker != null) 'sp': speaker.toJson()},
+        toMailbox: f.outbox,
+        queue: true,
+        msgId: id);
+    if (sent) {
+      await _markMessage(id, DeliveryState.sent);
+      notifyListeners();
+    }
+    return _messages.firstWhere((x) => x.id == id, orElse: () => m);
+  }
+
+  Future<void> _onMessage(Friend f, Map<String, dynamic> m) async {
+    if (f.state != FriendState.friends) return; // not friends yet: nothing to show
+    final remoteId = m['id'];
+    final text = m['x'];
+    if (remoteId is! String || remoteId.isEmpty || remoteId.length > 64) return;
+    if (text is! String || text.trim().isEmpty || text.length > maxText) return;
+    final docId = '${f.id}-in-$remoteId';
+    if (_messages.any((x) => x.id == docId)) return;
+    String? speakerName;
+    int? speakerColor;
+    final sp = m['sp'];
+    if (sp is Map && sp['n'] is String && sp['c'] is int) {
+      final name = (sp['n'] as String).trim();
+      if (name.isNotEmpty) {
+        speakerName = name.length > 60 ? name.substring(0, 60) : name;
+        speakerColor = sp['c'] as int;
+      }
+    }
+    await _putMessage(FriendMessage(
+      id: docId,
+      friendId: f.id,
+      outgoing: false,
+      text: text,
+      createdAt: _clock(),
+      state: DeliveryState.delivered,
+      speakerName: speakerName,
+      speakerColor: speakerColor,
+    ));
+    // Tell them it arrived. Best effort: if this is lost they just see "sent".
+    await _sendSealed(f, type: 'ack', body: {'id': remoteId}, toMailbox: f.outbox);
+  }
+
+  Future<void> _onAck(Friend f, Map<String, dynamic> m) async {
+    final id = m['id'];
+    if (id is String) await _markMessage(id, DeliveryState.delivered);
+  }
+
   // ---- receiving --------------------------------------------------------
 
   Future<void> _handle(Envelope e) async {
@@ -417,7 +524,12 @@ class FriendsController extends ChangeNotifier {
     switch (type) {
       case 'accept':
         await _onAccept(f, m);
+      case 'msg':
+        await _onMessage(f, m);
+      case 'ack':
+        await _onAck(f, m);
     }
+
     notifyListeners();
   }
 
@@ -485,6 +597,7 @@ class FriendsController extends ChangeNotifier {
     await _secrets.delete(secretKeyName);
     identity = null;
     friends = const [];
+    _messages = const [];
     _keys = null;
     notifyListeners();
   }
