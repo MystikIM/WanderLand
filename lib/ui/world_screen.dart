@@ -135,15 +135,7 @@ class _WorldScreenState extends State<WorldScreen> {
                 Positioned.fill(
                   child: bg != null && bg.existsSync()
                       ? Image.file(File(bg.path), fit: BoxFit.cover)
-                      : const DecoratedBox(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [Color(0xFF1B1B3A), Color(0xFF693668), Color(0xFFA74482)],
-                            ),
-                          ),
-                        ),
+                      : const CustomPaint(painter: SceneBackdropPainter()),
                 ),
                 for (final it in world.items) _piece(world, it, box),
               ]);

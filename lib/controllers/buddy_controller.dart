@@ -14,6 +14,11 @@ class BuddyController extends ChangeNotifier {
   BuddyState state = const BuddyState();
   Map<String, DateTime> earned = {};
   final List<RewardBadge> celebrations = [];
+
+  /// The last care action done and a counter that goes up each time, so the
+  /// buddy can play a one-shot animation (chewing, bubbles, cuddles...).
+  BuddyAction? lastAction;
+  int actionTick = 0;
   int _alterCount = 0;
   int _days = 0;
 
@@ -72,6 +77,8 @@ class BuddyController extends ChangeNotifier {
       return false;
     }
     state = visited.care(a, now);
+    lastAction = a; // the screen plays a little animation for this
+    actionTick++;
     await _saveState();
     await _evaluate();
     notifyListeners();

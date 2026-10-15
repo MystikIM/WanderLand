@@ -53,6 +53,8 @@ class _BuddyScreenState extends State<BuddyScreen> {
             accessory: b.state.accessory,
             outfit: b.state.outfit,
             size: 140,
+            reaction: b.lastAction,
+            reactionTick: b.actionTick,
           ),
         ),
         SwitchListTile(

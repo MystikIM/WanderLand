@@ -80,7 +80,9 @@ class BuddyCard extends StatelessWidget {
               mood: mood,
               accessory: b.state.accessory,
               outfit: b.state.outfit,
-              size: 96,
+              size: 112,
+              reaction: b.lastAction,
+              reactionTick: b.actionTick,
             ),
             const SizedBox(width: 12),
             Expanded(
