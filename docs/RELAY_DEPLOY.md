@@ -16,7 +16,11 @@ the two `--target` options.)
 
 ## Run
 
-    ./wanderland-relay --port 8787 --bind 127.0.0.1 --data /var/lib/wanderland-relay
+    ./wanderland-relay --port 8787 --bind 127.0.0.1 --data /var/lib/wanderland-relay --behind-proxy
+
+Use `--behind-proxy` only when the relay is reached through a tunnel or proxy that passes the real
+address along (Cloudflare Tunnel does). It lets the relay rate-limit each sender fairly. Never use it if the
+relay can be reached directly, because then anyone could fake the address.
 
 Keep `--bind 127.0.0.1` and put a tunnel or reverse proxy with HTTPS in front of it, so the
 relay itself is never exposed directly. Check it with `curl http://127.0.0.1:8787/v1/health`
@@ -29,7 +33,7 @@ relay itself is never exposed directly. Check it with `curl http://127.0.0.1:878
     After=network.target
 
     [Service]
-    ExecStart=/opt/wanderland-relay/wanderland-relay --port 8787 --bind 127.0.0.1 --data /var/lib/wanderland-relay
+    ExecStart=/opt/wanderland-relay/wanderland-relay --port 8787 --bind 127.0.0.1 --data /var/lib/wanderland-relay --behind-proxy
     Restart=always
     User=wanderland-relay
 
@@ -44,7 +48,8 @@ Install `cloudflared`, create a tunnel in the Cloudflare dashboard, and point a 
 
 ## What it stores
 
-Only sealed bytes and a random mailbox id per friendship. No usernames, no accounts, no IP
-addresses. Mail is deleted when the phone confirms it received it, or after 7 days.
+Only sealed bytes and a random mailbox id per friendship. No usernames, no accounts, and the relay
+itself does not store or log IP addresses. (Cloudflare, which carries the traffic through the tunnel,
+can see addresses and the mailbox ids in the web addresses, as any web host can.) Mail is deleted when the phone confirms it received it, or after 7 days.
 Backups of the data folder are not needed; the worst case of losing it is that mail that
 was still waiting is lost.
