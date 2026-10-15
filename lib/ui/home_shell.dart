@@ -4,7 +4,7 @@ import '../controllers/settings_controller.dart';
 import '../app_links.dart';
 import 'activity_screen.dart';
 import 'alters_screen.dart';
-import 'chat_screen.dart';
+import 'chat_home.dart';
 import 'dedication.dart';
 import 'front_screen.dart';
 import 'more_screen.dart';
@@ -24,7 +24,7 @@ class HomeShell extends StatefulWidget {
     () => const ActivityScreen(),
     () => const AltersScreen(),
     () => const WorldScreen(),
-    () => const ChatScreen(),
+    () => const ChatHome(),
     () => const MoreScreen(),
   ];
 
