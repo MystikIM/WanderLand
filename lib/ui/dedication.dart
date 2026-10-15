@@ -81,7 +81,7 @@ class _DedicationCardState extends State<DedicationCard> {
                       children: [
                         _friend(0, 'cat', const Color(0xFFB57BFF)),
                         _friend(1, 'bunny', const Color(0xFFFF9AD5)),
-                        const _FoxView(key: Key('dedication-fox')),
+                        const _WolfView(key: Key('dedication-wolf')),
                         _friend(2, 'frog', const Color(0xFF6FE3A1)),
                         _friend(3, 'dog', const Color(0xFFFFB86B)),
                       ],
@@ -216,14 +216,14 @@ class _DedicationHill extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter old) => false;
 }
 
-/// "Crazy Fox": a wild-tufted orange fox with mismatched eyes and a tongue out.
-class _FoxView extends StatefulWidget {
-  const _FoxView({super.key});
+/// "Joker_Wolf": a wild-tufted grey wolf with mismatched eyes and a tongue out.
+class _WolfView extends StatefulWidget {
+  const _WolfView({super.key});
   @override
-  State<_FoxView> createState() => _FoxViewState();
+  State<_WolfView> createState() => _WolfViewState();
 }
 
-class _FoxViewState extends State<_FoxView> with SingleTickerProviderStateMixin {
+class _WolfViewState extends State<_WolfView> with SingleTickerProviderStateMixin {
   late final AnimationController _ctl =
       AnimationController(vsync: this, duration: const Duration(milliseconds: 1100), value: 1);
 
@@ -246,7 +246,7 @@ class _FoxViewState extends State<_FoxView> with SingleTickerProviderStateMixin 
               offset: Offset(0, -hop * 22),
               child: Transform.rotate(
                 angle: live ? sin(t * pi * 6) * (1 - t) * .18 : 0,
-                child: SizedBox(width: 86, height: 86, child: CustomPaint(painter: _FoxPainter(live ? t : 1))),
+                child: SizedBox(width: 86, height: 86, child: CustomPaint(painter: _WolfPainter(live ? t : 1))),
               ),
             );
           },
@@ -254,8 +254,8 @@ class _FoxViewState extends State<_FoxView> with SingleTickerProviderStateMixin 
       );
 }
 
-class _FoxPainter extends CustomPainter {
-  _FoxPainter(this.t);
+class _WolfPainter extends CustomPainter {
+  _WolfPainter(this.t);
   final double t; // 1 = resting; < 1 = going wild (eyes spin)
 
   @override
@@ -273,8 +273,8 @@ class _FoxPainter extends CustomPainter {
       c.drawPath(p, line);
     }
 
-    const orange = Color(0xFFFF8A3D);
-    const cream = Color(0xFFFFF1DC);
+    const orange = Color(0xFF8E9BB5); // wolf grey-blue
+    const cream = Color(0xFFEDF1F8);
     // wild forehead tuft (behind the head)
     shape(
       Path()
@@ -292,7 +292,7 @@ class _FoxPainter extends CustomPainter {
       shape(
         Path()
           ..moveTo(cx + dx * w * .34, h * .42)
-          ..lineTo(cx + dx * w * .40, h * .08)
+          ..lineTo(cx + dx * w * .38, h * -.04)
           ..lineTo(cx + dx * w * .12, h * .28)
           ..close(),
         orange,
@@ -300,7 +300,7 @@ class _FoxPainter extends CustomPainter {
       c.drawPath(
         Path()
           ..moveTo(cx + dx * w * .33, h * .36)
-          ..lineTo(cx + dx * w * .36, h * .15)
+          ..lineTo(cx + dx * w * .35, h * .08)
           ..lineTo(cx + dx * w * .19, h * .29)
           ..close(),
         f(const Color(0xFFFF9DB8)),
@@ -313,8 +313,8 @@ class _FoxPainter extends CustomPainter {
     for (final dx in [-1.0, 1.0]) {
       c.drawOval(Rect.fromCenter(center: Offset(cx + dx * w * .27, h * .72), width: w * .34, height: h * .24), f(cream));
     }
-    c.drawOval(Rect.fromCenter(center: Offset(cx, h * .74), width: w * .34, height: h * .22), f(cream));
-    c.drawOval(Rect.fromCenter(center: Offset(cx, h * .64), width: w * .10, height: w * .07), f(_ink));
+    c.drawOval(Rect.fromCenter(center: Offset(cx, h * .75), width: w * .38, height: h * .27), f(cream));
+    c.drawOval(Rect.fromCenter(center: Offset(cx, h * .65), width: w * .13, height: w * .085), f(_ink));
     // mismatched crazy eyes
     final spin = (1 - t) * pi * 6;
     for (final (dx, r) in [(-1.0, w * .11), (1.0, w * .075)]) {
@@ -334,5 +334,5 @@ class _FoxPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _FoxPainter old) => old.t != t;
+  bool shouldRepaint(covariant _WolfPainter old) => old.t != t;
 }

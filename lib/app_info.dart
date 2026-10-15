@@ -8,5 +8,5 @@ const String appTagline = 'A multi plural system manager / chaos crunch';
 const String dedicationMotto1 = 'Ohana means family.';
 const String dedicationMotto2 = 'Family means no one is left behind or forgotten.';
 const String dedicationTo =
-    'Made with love for The Zoo and Crazy Fox, and for every system out there.';
+    'Made with love for The Zoo and Joker_Wolf, and for every system out there.';
 const String madeBy = 'Made by MystikIM';

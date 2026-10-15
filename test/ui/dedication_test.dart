@@ -44,17 +44,17 @@ void main() {
     await pumpScreen(tester, const DedicationScreen(), providers: p);
     expect(find.text(dedicationMotto1), findsOneWidget);
     expect(find.text(dedicationMotto2), findsOneWidget);
-    expect(find.textContaining('The Zoo and Crazy Fox'), findsOneWidget);
+    expect(find.textContaining('The Zoo and Joker_Wolf'), findsOneWidget);
     expect(find.textContaining('MystikIM'), findsOneWidget);
-    expect(find.byKey(const Key('dedication-fox')), findsOneWidget);
+    expect(find.byKey(const Key('dedication-wolf')), findsOneWidget);
   });
 
-  testWidgets('tapping a friend or the fox plays a little reaction and nothing breaks', (tester) async {
+  testWidgets('tapping a friend or the wolf plays a little reaction and nothing breaks', (tester) async {
     final (_, p) = await env();
     await pumpScreen(tester, const DedicationScreen(), providers: p);
     await tester.tap(find.byKey(const Key('dedication-friend-0')));
     await tester.pump(const Duration(milliseconds: 600));
-    await tester.tap(find.byKey(const Key('dedication-fox')));
+    await tester.tap(find.byKey(const Key('dedication-wolf')));
     await tester.pump(const Duration(milliseconds: 500));
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
