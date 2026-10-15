@@ -1,13 +1,18 @@
-# Release checklist: WanderLand (InnerWorlds) v0.1.3
+# Release checklist: WanderLand (InnerWorlds) v0.2.0
 
 Honest status of each item on a real phone. Nothing is marked PASS unless it was
 actually checked. Test phone: Revvl 7 Pro 5G, Android 16.
 
 Legend: PASS = checked and works. NOT TESTED = not checked yet (do not assume).
 
+Rows 0 to 15 below are carried over from v0.1.3 and were NOT re-checked on a phone for
+this build; only the chat items at the bottom are new. Chat was checked with pretend
+phones on a PC (widget and end-to-end tests, and a live test through the real relay),
+never on two real phones.
+
 | # | Item | Status | Note |
 |---|------|--------|------|
-| 0 | Release APK is signed with the MystikIM key, id `com.mystikim.wanderland`, asks for no internet permission | PASS | checked with apksigner and aapt |
+| 0 | Release APK is signed with the MystikIM key, id `com.mystikim.wanderland`; permissions are the same 7 as v0.1.3 plus INTERNET (for friend chat only) | PASS | checked with apksigner and aapt |
 | 0 | Installs and opens on the phone | PASS | debug and release both opened, no crash in the log |
 | 0 | About 300 automated tests pass, analyze clean | PASS | `flutter test`, `flutter analyze` |
 | 1 | First run: setup screen, name, color, font, word for "alter", greeting | NOT TESTED | |
@@ -25,7 +30,7 @@ Legend: PASS = checked and works. NOT TESTED = not checked yet (do not assume).
 | 12 | Inner World: grow from words, "I don't have a house" adds none, drag, resize, recolor, remove, add piece, background photo, tap to giggle | PARTLY | opened and viewed by hand; the rest not checked |
 | 12b | Dedication shows once after setup, and under More > About | NOT TESTED | |
 | 13 | Backup: make a backup, clear app data, restore | NOT TESTED | |
-| 14 | Airplane mode run-through | NOT TESTED | the release app has no internet permission, so it cannot go online anyway |
+| 14 | Airplane mode run-through | NOT TESTED | now matters: chat should show "Waiting to send" |
 | 15 | Import your own font | NOT TESTED | |
 
 Anything NOT TESTED goes into the release notes as "not tested yet", exactly as
@@ -51,15 +56,14 @@ written here.
 - [ ] Website page checked on a preview, then shipped
 - [ ] Phone checklist above run, results updated here and on the build page
 
-## Before publishing a build with friend chat (blocks the next release)
+## Friend chat items (new in 0.2.0)
 
-The table above is the truth for v0.1.3, which has no internet permission. A build with
-friend chat has the internet permission, so these must be done first:
+This build has the internet permission, for friend chat only. These had to be done first:
 
 | # | Item | Status | Note |
 |---|------|--------|------|
-| B1 | The website and README no longer say "no internet permission" / "nothing leaves your phone", and the site has a plain "How friend chat works" section (scrambled end to end, relay sees only size and time, off by default, only people you add, block, no forward secrecy yet) | NOT DONE | blocks release |
-| B2 | Release notes say chat uses the internet only after it is switched on, and list the exact permission list of the APK (checked with aapt) | NOT DONE | blocks release |
+| B1 | The website and README no longer say "no internet permission" / "nothing leaves your phone" for this build, and the site has a plain "How friend chat works" section (scrambled end to end, relay sees only size and time, off by default, only people you add, block, no forward secrecy yet) | PASS 2026-10-15 | site promises and a "How friend chat works" section updated; README updated |
+| B2 | Release notes say chat uses the internet only after it is switched on, and list the exact permission list of the APK (checked with aapt) | PASS 2026-10-15 | same 7 permissions as v0.1.3 plus INTERNET |
 | B3 | Relay is running and `https://chat.mystikim.com/v1/health` answers `ok` | PASS 2026-10-15 | home server box, Cloudflare Tunnel |
 | B4 | Live smoke test against the real relay passes (`RELAY_SMOKE=1 flutter test test/ui/friends/live_relay_smoke_test.dart`) | PASS 2026-10-15 | from the PC, two pretend phones |
 | B5 | Two REAL phones, different networks (one on home Wi-Fi, one on mobile data), become friends and chat both ways | NOT TESTED | needs a second Android phone |
