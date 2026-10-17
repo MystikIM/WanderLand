@@ -7,6 +7,7 @@ import '../controllers/settings_controller.dart';
 import '../domain/buddy.dart';
 import '../domain/little.dart';
 import '../domain/rewards.dart';
+import 'art.dart';
 import 'buddy_view.dart';
 import 'little_scope.dart';
 
@@ -104,7 +105,8 @@ class _BuddyScreenState extends State<BuddyScreen> {
           for (var i = 0; i < b.state.memorial.length; i++)
             ListTile(
               key: Key('memorial-$i'),
-              leading: const Text('💫', style: TextStyle(fontSize: 24)),
+              leading: const ArtImage('buddy_memorial_star',
+                  width: 36, height: 36, fallback: Text('💫', style: TextStyle(fontSize: 24))),
               title: Text('${b.state.memorial[i].name} (${b.state.memorial[i].species})'),
               subtitle: Text(
                   'Passed ${b.state.memorial[i].passedAt.toIso8601String().substring(0, 10)}'),
@@ -128,7 +130,9 @@ class _BuddyScreenState extends State<BuddyScreen> {
         const SizedBox(height: 16),
         const Text('Kind of buddy'),
         Wrap(spacing: 8, children: [
-          for (final sp in kBuddySpecies)
+          // 'rabbit' looked too much like 'bunny', so it is not offered any more
+          // (anyone who already has one keeps it).
+          for (final sp in kBuddySpecies.where((s) => s != 'rabbit' || b.state.species == 'rabbit'))
             ChoiceChip(
               key: Key('species-$sp'),
               label: Text(sp),
@@ -148,6 +152,9 @@ class _BuddyScreenState extends State<BuddyScreen> {
           for (final a in kAccessories)
             ChoiceChip(
               key: Key('acc-$a'),
+              avatar: unlocked.contains(a)
+                  ? ArtImage('buddy_acc_$a', width: 26, height: 26)
+                  : LockedArt('buddy_acc_$a', size: 26),
               label: Text(unlocked.contains(a) ? a : '🔒 $a'),
               selected: b.state.accessory == a,
               onSelected: unlocked.contains(a) ? (_) => b.setAccessory(a) : null,
@@ -165,6 +172,9 @@ class _BuddyScreenState extends State<BuddyScreen> {
           for (final o in kOutfits)
             ChoiceChip(
               key: Key('outfit-$o'),
+              avatar: b.unlockedOutfits.contains(o)
+                  ? ArtImage('buddy_outfit_$o', width: 26, height: 26)
+                  : LockedArt('buddy_outfit_$o', size: 26),
               label: Text(b.unlockedOutfits.contains(o) ? o : '🔒 $o'),
               selected: b.state.outfit == o,
               onSelected: b.unlockedOutfits.contains(o) ? (_) => b.setOutfit(o) : null,
@@ -175,8 +185,13 @@ class _BuddyScreenState extends State<BuddyScreen> {
         for (final badge in kBadges)
           ListTile(
             key: Key('badge-${badge.id}'),
-            leading: Text(b.earned.containsKey(badge.id) ? badge.emoji : '🔒',
-                style: const TextStyle(fontSize: 26)),
+            leading: b.earned.containsKey(badge.id)
+                ? ArtImage(badgeArtName(badge.id),
+                    width: 48,
+                    height: 48,
+                    fallback: Text(badge.emoji, style: const TextStyle(fontSize: 26)))
+                : LockedArt(badgeArtName(badge.id),
+                    size: 48, fallback: const Text('🔒', style: TextStyle(fontSize: 26))),
             title: Text(badge.title),
             subtitle: Text(
               '${b.earned.containsKey(badge.id) ? 'Earned' : 'Locked: ${badge.how}'}'

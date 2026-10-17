@@ -5,6 +5,7 @@ import '../controllers/buddy_controller.dart';
 import '../controllers/front_controller.dart';
 import '../domain/buddy.dart';
 import '../domain/little.dart';
+import 'art.dart';
 import 'buddy_screen.dart';
 import 'buddy_view.dart';
 
@@ -25,7 +26,10 @@ class BuddyCard extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(children: [
-            Text(soft ? '⭐' : '💫', style: const TextStyle(fontSize: 40)),
+            ArtImage('buddy_memorial_star',
+                width: 110,
+                height: 110,
+                fallback: Text(soft ? '⭐' : '💫', style: const TextStyle(fontSize: 40))),
             const SizedBox(height: 8),
             Text(
               soft
@@ -63,7 +67,10 @@ class BuddyCard extends StatelessWidget {
           for (final c in b.celebrations)
             ListTile(
               key: Key('celebrate-${c.id}'),
-              leading: Text(c.emoji, style: const TextStyle(fontSize: 28)),
+              leading: ArtImage(badgeArtName(c.id),
+                  width: 48,
+                  height: 48,
+                  fallback: Text(c.emoji, style: const TextStyle(fontSize: 28))),
               title: Text('New badge: ${c.title}!'),
               subtitle: Text(c.how),
             ),

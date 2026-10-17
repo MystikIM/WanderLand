@@ -8,6 +8,7 @@ import '../domain/alter_kinds.dart';
 import '../domain/models.dart';
 import 'alter_detail_screen.dart';
 import 'alter_frames.dart';
+import 'art.dart';
 import 'alter_edit_screen.dart';
 
 class AlterAvatar extends StatelessWidget {
@@ -39,14 +40,25 @@ class AlterAvatar extends StatelessWidget {
     final kind = frameFor(alter.kind);
     if (kind == null) return circle;
     // Non-human alters get a cartoony frame (ears, horns, wings...) around the picture.
+    // The pictures are drawn so the round hole is about 56% of the frame, and the
+    // hole sits a touch below the middle; the avatar is tucked under the ring.
     final d = radius * 2;
+    final f = d / 0.60;
     return SizedBox(
       width: d,
       height: d,
       child: Stack(clipBehavior: Clip.none, alignment: Alignment.center, children: [
-        Positioned.fill(child: CustomPaint(painter: AlterFramePainter(kind, behind: true))),
         circle,
-        Positioned.fill(child: CustomPaint(painter: AlterFramePainter(kind, behind: false))),
+        Positioned(
+          left: -(f - d) / 2,
+          top: -(f - d) / 2 - f * 0.017,
+          width: f,
+          height: f,
+          child: IgnorePointer(
+            child: ArtImage('frame_$kind',
+                fallback: CustomPaint(painter: AlterFramePainter(kind, behind: false))),
+          ),
+        ),
       ]),
     );
   }
@@ -90,8 +102,11 @@ class _AltersScreenState extends State<AltersScreen> {
           ? Center(
               child: Padding(
                 padding: const EdgeInsets.all(24),
-                child: Text('Add your first ${t('alter')} with the button below.',
-                    textAlign: TextAlign.center),
+                child: EmptyArt(
+                  'empty_alters',
+                  Text('Add your first ${t('alter')} with the button below.',
+                      textAlign: TextAlign.center),
+                ),
               ),
             )
           : ListView(children: [

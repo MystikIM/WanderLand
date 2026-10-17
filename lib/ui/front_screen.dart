@@ -13,6 +13,7 @@ import 'buddy_card.dart';
 import 'little_scope.dart';
 import 'quote_card.dart';
 import 'switch_sheet.dart';
+import 'art.dart';
 
 class FrontScreen extends StatelessWidget {
   const FrontScreen({super.key});
@@ -62,10 +63,14 @@ class FrontScreen extends StatelessWidget {
       const BuddyCard(),
       const SizedBox(height: 16),
       if (!hasAlters)
-        Text(
-          level == LittleLevel.none
-              ? 'Add your first ${t('alter')} on the ${t.cap('alters')} tab to get started.'
-              : copy('addFirst'),
+        EmptyArt(
+          'empty_front',
+          Text(
+            level == LittleLevel.none
+                ? 'Add your first ${t('alter')} on the ${t.cap('alters')} tab to get started.'
+                : copy('addFirst'),
+            textAlign: TextAlign.center,
+          ),
         )
       else ...[
         FilledButton.icon(

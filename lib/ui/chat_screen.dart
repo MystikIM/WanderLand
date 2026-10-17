@@ -4,6 +4,7 @@ import '../controllers/alter_controller.dart';
 import '../controllers/chat_controller.dart';
 import '../controllers/front_controller.dart';
 import 'alters_screen.dart' show AlterAvatar;
+import 'art.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -108,7 +109,8 @@ class _ChatScreenState extends State<ChatScreen> {
       ),
       Expanded(
         child: messages.isEmpty
-            ? const Center(child: Text('No messages yet. Say hi!'))
+            ? const Center(
+                child: EmptyArt('empty_chat', Text('No messages yet. Say hi!'), size: 130))
             : ListView(padding: const EdgeInsets.all(8), children: [
                 for (final m in messages)
                   Builder(builder: (context) {

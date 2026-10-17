@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../app_info.dart';
 import '../controllers/settings_controller.dart';
 import '../domain/buddy.dart';
+import 'art.dart';
 import 'buddy_view.dart';
 
 const _ink = Color(0xFF2B1B3D);
@@ -29,18 +30,15 @@ class DedicationCard extends StatefulWidget {
 }
 
 class _DedicationCardState extends State<DedicationCard> {
-  final _ticks = List<int>.filled(4, 0);
-
-  Widget _friend(int i, String species, Color color) => GestureDetector(
+  Widget _friend(int i, String species, Color color) => _CrewMember(
         key: Key('dedication-friend-$i'),
-        onTap: () => setState(() => _ticks[i]++),
-        child: BuddyView(
+        art: species,
+        size: 66,
+        fallback: BuddyView(
           species: species,
           color: color,
           mood: BuddyMood.happy,
           size: 62,
-          reaction: BuddyAction.cuddle,
-          reactionTick: _ticks[i],
         ),
       );
 
@@ -56,7 +54,10 @@ class _DedicationCardState extends State<DedicationCard> {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(26),
         child: Stack(children: [
-          const Positioned.fill(child: CustomPaint(painter: _DedicationSky())),
+          const Positioned.fill(
+            child: ArtImage('dedication_backdrop',
+                fit: BoxFit.cover, fallback: CustomPaint(painter: _DedicationSky())),
+          ),
           Column(mainAxisSize: MainAxisSize.min, children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(18, 22, 18, 0),
@@ -70,7 +71,6 @@ class _DedicationCardState extends State<DedicationCard> {
             SizedBox(
               height: 128,
               child: Stack(children: [
-                const Positioned.fill(child: CustomPaint(painter: _DedicationHill())),
                 Align(
                   alignment: Alignment.bottomCenter,
                   child: Padding(
@@ -190,32 +190,6 @@ class _DedicationSky extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter old) => false;
 }
 
-class _DedicationHill extends CustomPainter {
-  const _DedicationHill();
-  @override
-  void paint(Canvas c, Size s) {
-    final p = Path()..moveTo(0, s.height);
-    p.lineTo(0, s.height * .62);
-    for (var x = 0.0; x <= s.width; x += 4) {
-      p.lineTo(x, s.height * .62 + sin(x / s.width * 2 * pi) * s.height * .06);
-    }
-    p
-      ..lineTo(s.width, s.height)
-      ..close();
-    c.drawPath(p, Paint()..color = const Color(0xFF5B2A9E));
-    c.drawPath(
-      p,
-      Paint()
-        ..color = _ink
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 4,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter old) => false;
-}
-
 /// "Joker_Wolf": a wild-tufted grey wolf with mismatched eyes and a tongue out.
 class _WolfView extends StatefulWidget {
   const _WolfView({super.key});
@@ -246,7 +220,14 @@ class _WolfViewState extends State<_WolfView> with SingleTickerProviderStateMixi
               offset: Offset(0, -hop * 22),
               child: Transform.rotate(
                 angle: live ? sin(t * pi * 6) * (1 - t) * .18 : 0,
-                child: SizedBox(width: 86, height: 86, child: CustomPaint(painter: _WolfPainter(live ? t : 1))),
+                child: SizedBox(
+                  width: 92,
+                  height: 92,
+                  child: ArtImage(
+                    live ? 'dedication_joker_wolf_happy' : 'dedication_joker_wolf_calm',
+                    fallback: CustomPaint(painter: _WolfPainter(live ? t : 1)),
+                  ),
+                ),
               ),
             );
           },
@@ -335,4 +316,49 @@ class _WolfPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _WolfPainter old) => old.t != t;
+}
+
+/// One friend of the crew: calm, and a happy little hop when tapped.
+class _CrewMember extends StatefulWidget {
+  const _CrewMember({super.key, required this.art, required this.size, required this.fallback});
+  final String art;
+  final double size;
+  final Widget fallback;
+  @override
+  State<_CrewMember> createState() => _CrewMemberState();
+}
+
+class _CrewMemberState extends State<_CrewMember> with SingleTickerProviderStateMixin {
+  late final AnimationController _ctl =
+      AnimationController(vsync: this, duration: const Duration(milliseconds: 900), value: 1);
+
+  @override
+  void dispose() {
+    _ctl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => GestureDetector(
+        onTap: () => _ctl.forward(from: 0),
+        child: AnimatedBuilder(
+          animation: _ctl,
+          builder: (_, _) {
+            final t = _ctl.value;
+            final live = t < 1;
+            final hop = live ? sin(t * pi * 3).abs() * (1 - t) : 0.0;
+            return Transform.translate(
+              offset: Offset(0, -hop * 16),
+              child: SizedBox(
+                width: widget.size,
+                height: widget.size,
+                child: ArtImage(
+                  'dedication_${widget.art}_${live ? "happy" : "calm"}',
+                  fallback: widget.fallback,
+                ),
+              ),
+            );
+          },
+        ),
+      );
 }

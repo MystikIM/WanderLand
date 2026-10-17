@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../controllers/alter_controller.dart';
 import '../controllers/front_controller.dart';
 import '../domain/activity.dart';
+import 'art.dart';
 
 String formatDuration(Duration d) {
   final h = d.inHours;
@@ -66,9 +67,12 @@ class _ActivityScreenState extends State<ActivityScreen> {
         if (sorted.isEmpty)
           Padding(
             padding: const EdgeInsets.all(24),
-            child: Text(
-              start == thisWeek ? 'Nothing logged this week yet.' : 'Nothing logged this week.',
-              textAlign: TextAlign.center,
+            child: EmptyArt(
+              'empty_activity',
+              Text(
+                start == thisWeek ? 'Nothing logged this week yet.' : 'Nothing logged this week.',
+                textAlign: TextAlign.center,
+              ),
             ),
           )
         else ...[

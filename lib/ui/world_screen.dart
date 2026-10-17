@@ -9,6 +9,7 @@ import '../domain/world.dart';
 import 'alter_link_nav.dart';
 import 'alters_screen.dart' show AlterAvatar;
 import 'appearance_screen.dart' show kSwatches;
+import 'art.dart';
 import 'piece_body.dart';
 import 'scene_painters.dart';
 import 'world_entry_screen.dart';
@@ -135,7 +136,13 @@ class _WorldScreenState extends State<WorldScreen> {
                 Positioned.fill(
                   child: bg != null && bg.existsSync()
                       ? Image.file(File(bg.path), fit: BoxFit.cover)
-                      : const CustomPaint(painter: SceneBackdropPainter()),
+                      : const ArtImage(
+                          'world_backdrop',
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                          height: double.infinity,
+                          fallback: CustomPaint(painter: SceneBackdropPainter()),
+                        ),
                 ),
                 for (final it in world.items) _piece(world, it, box),
               ]);
@@ -205,10 +212,14 @@ class _WorldScreenState extends State<WorldScreen> {
       if (world.entries.isEmpty)
         const Padding(
           padding: EdgeInsets.all(16),
-          child: Text(
-            'Write about your inner world in your own words. What is it like? What is there? '
-            'Things you mention can appear in the picture above, and you can move, resize, recolor or remove anything.',
-          ),
+          child: Column(children: [
+            ArtImage('world_empty', width: 140, height: 140),
+            SizedBox(height: 8),
+            Text(
+              'Write about your inner world in your own words. What is it like? What is there? '
+              'Things you mention can appear in the picture above, and you can move, resize, recolor or remove anything.',
+            ),
+          ]),
         )
       else
         for (final e in world.entries)

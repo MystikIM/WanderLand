@@ -5,6 +5,7 @@ import '../controllers/settings_controller.dart';
 import '../theme/terminology.dart';
 import '../theme/theme_config.dart';
 import 'appearance_screen.dart' show kSwatches;
+import 'art.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -32,10 +33,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     return Scaffold(
       body: SafeArea(
         child: ListView(padding: const EdgeInsets.all(20), children: [
+          const ArtImage('onboarding_welcome', height: 170),
+          const SizedBox(height: 8),
           Text(appName, style: Theme.of(context).textTheme.headlineMedium),
           Text('$appDescriptor · $appTagline'),
           const SizedBox(height: 24),
-          Text('Let\'s make this yours.', style: Theme.of(context).textTheme.titleLarge),
+          Row(children: [
+            Expanded(child: Text('Let\'s make this yours.', style: Theme.of(context).textTheme.titleLarge)),
+            const ArtImage('onboarding_make_it_yours', width: 64, height: 64),
+          ]),
           const Text('Nothing here is required, and you can change all of it later.'),
           const SizedBox(height: 16),
           TextField(

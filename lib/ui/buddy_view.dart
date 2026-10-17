@@ -1,6 +1,8 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import '../domain/buddy.dart';
+import 'art.dart';
+import 'buddy_art.dart';
 
 const _ink = Color(0xFF2B1B3D);
 
@@ -38,9 +40,38 @@ class _BuddyViewState extends State<BuddyView> with SingleTickerProviderStateMix
   late final AnimationController _ctl =
       AnimationController(vsync: this, duration: const Duration(milliseconds: 3200), value: 1);
 
+  bool get _useArt =>
+      buddyHasArt(widget.species) && widget.accessory.isEmpty && widget.outfit.isEmpty;
+
+  static const _poses = [
+    'idle_happy', 'idle_content', 'idle_sleepy', 'eating_open', 'eating_closed',
+    'cuddle', 'jump', 'wash',
+  ];
+  static const _props = [
+    'apple', 'cookie', 'crumbs', 'foam_puff', 'bubble_small', 'bubble_medium',
+    'bubble_large', 'heart_float', 'balloon', 'sparkle_star', 'dust_puff', 'petting_hand',
+  ];
+  String? _warmedFor;
+
+  /// Load every pose of this species up front so swapping poses never flickers.
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_useArt || _warmedFor == widget.species) return;
+    _warmedFor = widget.species;
+    final sp = widget.species == 'rabbit' ? 'bunny' : widget.species;
+    for (final p in _poses) {
+      precacheImage(AssetImage(artPath('buddy_${sp}_$p')), context, onError: (_, _) {});
+    }
+    for (final p in _props) {
+      precacheImage(AssetImage(artPath('buddy_prop_$p')), context, onError: (_, _) {});
+    }
+  }
+
   @override
   void didUpdateWidget(BuddyView old) {
     super.didUpdateWidget(old);
+    if (old.species != widget.species) didChangeDependencies();
     if (widget.reactionTick != old.reactionTick && widget.reaction != null) {
       _ctl.forward(from: 0);
     }
@@ -58,17 +89,26 @@ class _BuddyViewState extends State<BuddyView> with SingleTickerProviderStateMix
         height: widget.size,
         child: AnimatedBuilder(
           animation: _ctl,
-          builder: (_, _) => CustomPaint(
-            painter: _BuddyPainter(
-              widget.species,
-              widget.color,
-              widget.mood,
-              widget.accessory,
-              widget.outfit,
-              widget.reaction,
-              _ctl.value,
-            ),
-          ),
+          builder: (_, _) => _useArt
+              ? ArtBuddy(
+                  species: widget.species,
+                  color: widget.color,
+                  mood: widget.mood,
+                  size: widget.size,
+                  reaction: widget.reaction,
+                  t: _ctl.value,
+                )
+              : CustomPaint(
+                  painter: _BuddyPainter(
+                    widget.species,
+                    widget.color,
+                    widget.mood,
+                    widget.accessory,
+                    widget.outfit,
+                    widget.reaction,
+                    _ctl.value,
+                  ),
+                ),
         ),
       );
 }

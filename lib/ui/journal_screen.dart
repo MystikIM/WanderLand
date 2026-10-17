@@ -6,6 +6,7 @@ import '../domain/little.dart';
 import '../domain/pin_lock.dart';
 import 'journal_edit_screen.dart';
 import 'little_scope.dart';
+import 'art.dart';
 
 class JournalScreen extends StatefulWidget {
   const JournalScreen({super.key});
@@ -156,7 +157,10 @@ class _JournalScreenState extends State<JournalScreen> {
           ? const Center(
               child: Padding(
                 padding: EdgeInsets.all(24),
-                child: Text('Write your first entry with the button below.', textAlign: TextAlign.center),
+                child: EmptyArt(
+                  'empty_journal',
+                  Text('Write your first entry with the button below.', textAlign: TextAlign.center),
+                ),
               ),
             )
           : ListView(children: [
