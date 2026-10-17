@@ -58,17 +58,6 @@ void main() {
     expect(c.earned.keys, contains('care-10'));
   });
 
-  test('accessories: locked ones are ignored, unlocked ones work', () async {
-    await c.setAccessory('crown');
-    expect(c.state.accessory, '');
-    await c.refresh(alterCount: 10, history: []);
-    expect(c.unlocked, containsAll(['bow', 'scarf', 'crown']));
-    await c.setAccessory('crown');
-    expect(c.state.accessory, 'crown');
-    await c.setAccessory('');
-    expect(c.state.accessory, '');
-  });
-
   test('rename trims and refuses blank; species must be known', () async {
     await c.rename('  Mochi  ');
     expect(c.state.name, 'Mochi');

@@ -1,6 +1,8 @@
-# Release checklist: WanderLand (InnerWorlds) v0.3.0 (real art)
+# Release checklist: WanderLand (InnerWorlds) v0.3.1 (real art, no clothes)
 
-0.3.0 only changes pictures (plus the app icon, splash, notification icon and widget
+0.3.1 is 0.3.0 with buddy clothes and accessories removed (the owner did not want the old drawn buddy that
+they needed) and every picture the app does not use taken out of the download.
+0.3.0 only changed pictures (plus the app icon, splash, notification icon and widget
 icon). No new permissions, no change to chat. The art was checked by rendering the real
 screens on a PC, NOT on a phone: no phone was connected for this build.
 
@@ -8,7 +10,7 @@ screens on a PC, NOT on a phone: no phone was connected for this build.
 |---|------|--------|------|
 | A1 | Inner World pieces, backdrop, buddy poses and care props, frames, badges, dedication, empty screens, onboarding show the real pictures | PASS (PC render only) | rendered contact sheets reviewed by eye; not seen on a phone |
 | A2 | New app icon, splash logo, notification glyph, widget icon | NOT TESTED | built into the APK, never seen on a phone |
-| A3 | Buddy wearing an accessory or clothes | KNOWN GAP | still the old code-drawn buddy, because the new pictures are not made to be worn |
+| A3 | Buddy clothes and accessories | REMOVED in 0.3.1 | the buddy is always the new picture; the badges stay, and no longer unlock clothes |
 | A4 | Tab bar icons | NOT USED | kept the standard icons so your own theme colors still apply |
 
 (Everything below is carried over from v0.2.0 unchanged.)

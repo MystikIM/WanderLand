@@ -26,7 +26,9 @@ class ArtBuddy extends StatelessWidget {
     required this.size,
     this.reaction,
     this.t = 1,
+    this.bodyFallback,
   });
+  final Widget? bodyFallback;
   final String species;
   final Color color;
   final BuddyMood mood;
@@ -156,6 +158,7 @@ class ArtBuddy extends StatelessWidget {
               'buddy_${_artSpecies(species)}_$_pose',
               tint: softTint(color, .72),
               fit: BoxFit.contain,
+              fallback: bodyFallback,
             ),
           ),
         ),

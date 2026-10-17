@@ -54,7 +54,7 @@ class ArtImage extends StatelessWidget {
       filterQuality: FilterQuality.medium,
       semanticLabel: semanticLabel,
       excludeFromSemantics: semanticLabel == null,
-      errorBuilder: (_, _, _) => fallback ?? SizedBox(width: width, height: height),
+      errorBuilder: (_, _, _) => fallback ?? const SizedBox.shrink(),
     );
     if (tint != null) {
       img = ColorFiltered(colorFilter: ColorFilter.mode(tint!, BlendMode.modulate), child: img);

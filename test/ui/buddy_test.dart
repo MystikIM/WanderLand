@@ -6,7 +6,6 @@ import 'package:plural_app/controllers/front_controller.dart';
 import 'package:plural_app/controllers/settings_controller.dart';
 import 'package:plural_app/data/doc_store.dart';
 import 'package:plural_app/domain/buddy.dart';
-import 'package:plural_app/domain/rewards.dart';
 import 'package:plural_app/ui/buddy_card.dart';
 import 'package:plural_app/ui/buddy_screen.dart';
 import 'package:plural_app/ui/buddy_view.dart';
@@ -97,7 +96,7 @@ void main() {
     expect(find.byKey(const Key('buddy-feed')), findsNothing);
   });
 
-  testWidgets('Buddy & badges screen: locked vs earned badges, locked accessories cannot be chosen', (tester) async {
+  testWidgets('Buddy & badges screen: locked vs earned badges', (tester) async {
     tester.view.physicalSize = const Size(800, 3200);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
@@ -110,14 +109,6 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.descendant(of: find.byKey(const Key('badge-first-alter')), matching: find.textContaining('Earned')), findsOneWidget);
 
-    await tester.ensureVisible(find.byKey(const Key('acc-bow')));
-    await tester.tap(find.byKey(const Key('acc-bow')));
-    await tester.pumpAndSettle();
-    expect(e.buddy.state.accessory, 'bow');
-    await tester.ensureVisible(find.byKey(const Key('acc-crown')));
-    await tester.tap(find.byKey(const Key('acc-crown')), warnIfMissed: false);
-    await tester.pumpAndSettle();
-    expect(e.buddy.state.accessory, 'bow'); // crown is still locked
   });
 
   testWidgets('rename and species from the Buddy screen', (tester) async {
@@ -136,22 +127,21 @@ void main() {
     expect(e.buddy.state.species, 'cat');
   });
 
-  testWidgets('every kind of buddy, in every mood and accessory, draws without errors', (tester) async {
+  testWidgets('every kind of buddy, in every mood and every care action, draws without errors', (tester) async {
     expect(
       kBuddySpecies,
       containsAll(['bunny', 'dog', 'cat', 'rabbit', 'frog', 'turtle', 'butterfly', 'fairy', 'unicorn']),
     );
     for (final sp in kBuddySpecies) {
       for (final mood in BuddyMood.values) {
-        for (final acc in ['', ...kAccessories]) {
-          for (final outfit in ['', ...kOutfits]) {
-            await tester.pumpWidget(MaterialApp(
-              home: Scaffold(
-                body: BuddyView(
-                    species: sp, color: Colors.purple, mood: mood, accessory: acc, outfit: outfit),
-              ),
-            ));
-          }
+        for (final r in [null, ...BuddyAction.values]) {
+          await tester.pumpWidget(MaterialApp(
+            home: Scaffold(
+              body: BuddyView(
+                  species: sp, color: Colors.purple, mood: mood, reaction: r, reactionTick: 1),
+            ),
+          ));
+          await tester.pump(const Duration(milliseconds: 400));
         }
       }
     }

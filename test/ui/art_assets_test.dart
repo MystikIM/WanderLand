@@ -42,15 +42,9 @@ void main() {
     expect(has('buddy_memorial_star'), isTrue);
   });
 
-  test('every badge, accessory, outfit and alter frame has a picture', skip: _skip, () {
+  test('every badge and alter frame has a picture', skip: _skip, () {
     for (final b in kBadges) {
       expect(has(badgeArtName(b.id)), isTrue, reason: badgeArtName(b.id));
-    }
-    for (final a in kAccessories) {
-      expect(has('buddy_acc_$a'), isTrue, reason: 'buddy_acc_$a');
-    }
-    for (final o in kOutfits) {
-      expect(has('buddy_outfit_$o'), isTrue, reason: 'buddy_outfit_$o');
     }
     for (final k in kAlterKinds) {
       expect(has('frame_$k'), isTrue, reason: 'frame_$k');
@@ -63,7 +57,7 @@ void main() {
       expect(has('dedication_${n}_happy'), isTrue, reason: n);
     }
     expect(has('dedication_backdrop'), isTrue);
-    for (final n in ['front', 'alters', 'activity', 'journal', 'chat', 'world']) {
+    for (final n in ['front', 'alters', 'activity', 'journal', 'chat']) {
       expect(has('empty_$n'), isTrue, reason: 'empty_$n');
     }
     expect(has('onboarding_welcome'), isTrue);

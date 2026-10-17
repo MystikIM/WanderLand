@@ -6,9 +6,7 @@ import 'package:plural_app/controllers/front_controller.dart';
 import 'package:plural_app/controllers/settings_controller.dart';
 import 'package:plural_app/data/doc_store.dart';
 import 'package:plural_app/domain/buddy.dart';
-import 'package:plural_app/domain/models.dart';
 import 'package:plural_app/ui/buddy_card.dart';
-import 'package:plural_app/ui/buddy_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
 import '../helpers/harness.dart';
@@ -50,21 +48,4 @@ void main() {
     expect(b.state.careCount, 2);
   });
 
-  testWidgets('the wardrobe shows locked clothes and unlocks the shirt after 3 check-in days', (tester) async {
-    final (b, p) = await env();
-    await pumpScreen(tester, const BuddyScreen(), providers: p);
-    expect(find.text('🔒 shirt'), findsOneWidget);
-    await b.refresh(alterCount: 0, history: [
-      for (var d = 1; d <= 3; d++)
-        FrontEntry(id: '$d', alterId: 'a', tier: FrontTier.primary, start: DateTime(2026, 10, d)),
-    ]);
-    await tester.pumpAndSettle();
-    expect(find.text('shirt'), findsOneWidget);
-    await tester.tap(find.byKey(const Key('outfit-shirt')));
-    await tester.pumpAndSettle();
-    expect(b.state.outfit, 'shirt');
-    await tester.tap(find.byKey(const Key('outfit-cape')), warnIfMissed: false);
-    await tester.pumpAndSettle();
-    expect(b.state.outfit, 'shirt');
-  });
 }

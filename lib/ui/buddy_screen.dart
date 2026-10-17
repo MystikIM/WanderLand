@@ -35,7 +35,6 @@ class _BuddyScreenState extends State<BuddyScreen> {
     final id = front.primaryId;
     final alter = id == null ? null : alters.byId(id);
     final color = alter != null ? Color(alter.colorValue) : Theme.of(context).colorScheme.primary;
-    final unlocked = b.unlocked;
     final settings = context.watch<SettingsController>();
     final allowed = riskyActionsAllowed(currentLittleLevel(context),
         guardOn: settings.profile.littleGuard);
@@ -51,8 +50,6 @@ class _BuddyScreenState extends State<BuddyScreen> {
             species: b.state.species,
             color: color,
             mood: b.state.moodAt(b.clock()),
-            accessory: b.state.accessory,
-            outfit: b.state.outfit,
             size: 140,
             reaction: b.lastAction,
             reactionTick: b.actionTick,
@@ -140,46 +137,6 @@ class _BuddyScreenState extends State<BuddyScreen> {
               onSelected: (_) => b.setSpecies(sp),
             ),
         ]),
-        const SizedBox(height: 16),
-        const Text('Accessory'),
-        Wrap(spacing: 8, children: [
-          ChoiceChip(
-            key: const Key('acc-none'),
-            label: const Text('none'),
-            selected: b.state.accessory.isEmpty,
-            onSelected: (_) => b.setAccessory(''),
-          ),
-          for (final a in kAccessories)
-            ChoiceChip(
-              key: Key('acc-$a'),
-              avatar: unlocked.contains(a)
-                  ? ArtImage('buddy_acc_$a', width: 26, height: 26)
-                  : LockedArt('buddy_acc_$a', size: 26),
-              label: Text(unlocked.contains(a) ? a : '🔒 $a'),
-              selected: b.state.accessory == a,
-              onSelected: unlocked.contains(a) ? (_) => b.setAccessory(a) : null,
-            ),
-        ]),
-        const SizedBox(height: 16),
-        const Text('Clothes'),
-        Wrap(spacing: 8, children: [
-          ChoiceChip(
-            key: const Key('outfit-none'),
-            label: const Text('none'),
-            selected: b.state.outfit.isEmpty,
-            onSelected: (_) => b.setOutfit(''),
-          ),
-          for (final o in kOutfits)
-            ChoiceChip(
-              key: Key('outfit-$o'),
-              avatar: b.unlockedOutfits.contains(o)
-                  ? ArtImage('buddy_outfit_$o', width: 26, height: 26)
-                  : LockedArt('buddy_outfit_$o', size: 26),
-              label: Text(b.unlockedOutfits.contains(o) ? o : '🔒 $o'),
-              selected: b.state.outfit == o,
-              onSelected: b.unlockedOutfits.contains(o) ? (_) => b.setOutfit(o) : null,
-            ),
-        ]),
         const Divider(height: 32),
         Text('Badges', style: Theme.of(context).textTheme.titleMedium),
         for (final badge in kBadges)
@@ -193,11 +150,7 @@ class _BuddyScreenState extends State<BuddyScreen> {
                 : LockedArt(badgeArtName(badge.id),
                     size: 48, fallback: const Text('🔒', style: TextStyle(fontSize: 26))),
             title: Text(badge.title),
-            subtitle: Text(
-              '${b.earned.containsKey(badge.id) ? 'Earned' : 'Locked: ${badge.how}'}'
-              '${badge.outfit.isNotEmpty ? '  ·  unlocks ${badge.outfit}' : ''}'
-              '${badge.accessory.isNotEmpty ? '  ·  unlocks ${badge.accessory}' : ''}',
-            ),
+            subtitle: Text(b.earned.containsKey(badge.id) ? 'Earned' : 'Locked: ${badge.how}'),
           ),
       ]),
     );

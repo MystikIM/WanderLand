@@ -16,8 +16,6 @@ class BuddyView extends StatefulWidget {
     required this.species,
     required this.color,
     required this.mood,
-    this.accessory = '',
-    this.outfit = '',
     this.size = 120,
     this.reaction,
     this.reactionTick = 0,
@@ -25,8 +23,6 @@ class BuddyView extends StatefulWidget {
   final String species;
   final Color color;
   final BuddyMood mood;
-  final String accessory;
-  final String outfit;
   final double size;
   final BuddyAction? reaction;
   final int reactionTick;
@@ -40,8 +36,7 @@ class _BuddyViewState extends State<BuddyView> with SingleTickerProviderStateMix
   late final AnimationController _ctl =
       AnimationController(vsync: this, duration: const Duration(milliseconds: 3200), value: 1);
 
-  bool get _useArt =>
-      buddyHasArt(widget.species) && widget.accessory.isEmpty && widget.outfit.isEmpty;
+  bool get _useArt => buddyHasArt(widget.species);
 
   static const _poses = [
     'idle_happy', 'idle_content', 'idle_sleepy', 'eating_open', 'eating_closed',
@@ -83,6 +78,16 @@ class _BuddyViewState extends State<BuddyView> with SingleTickerProviderStateMix
     super.dispose();
   }
 
+  Widget _drawn() => CustomPaint(
+        painter: _BuddyPainter(
+          widget.species,
+          widget.color,
+          widget.mood,
+          widget.reaction,
+          _ctl.value,
+        ),
+      );
+
   @override
   Widget build(BuildContext context) => SizedBox(
         width: widget.size,
@@ -97,18 +102,10 @@ class _BuddyViewState extends State<BuddyView> with SingleTickerProviderStateMix
                   size: widget.size,
                   reaction: widget.reaction,
                   t: _ctl.value,
+                  // If a picture is ever missing, the drawn buddy steps in.
+                  bodyFallback: _drawn(),
                 )
-              : CustomPaint(
-                  painter: _BuddyPainter(
-                    widget.species,
-                    widget.color,
-                    widget.mood,
-                    widget.accessory,
-                    widget.outfit,
-                    widget.reaction,
-                    _ctl.value,
-                  ),
-                ),
+              : _drawn(),
         ),
       );
 }
@@ -123,12 +120,10 @@ class _Pose {
 double _seg(double t, double a, double b) => ((t - a) / (b - a)).clamp(0.0, 1.0).toDouble();
 
 class _BuddyPainter extends CustomPainter {
-  _BuddyPainter(this.species, this.color, this.mood, this.accessory, this.outfit, this.reaction, this.t);
+  _BuddyPainter(this.species, this.color, this.mood, this.reaction, this.t);
   final String species;
   final Color color;
   final BuddyMood mood;
-  final String accessory;
-  final String outfit;
   final BuddyAction? reaction;
   final double t;
 
@@ -234,18 +229,6 @@ class _BuddyPainter extends CustomPainter {
     final dark = Paint()..color = Color.lerp(color, const Color(0xFF000000), .25)!;
     final light = Paint()..color = Color.lerp(color, const Color(0xFFFFFFFF), .4)!;
     const sides = [-1.0, 1.0];
-    if (outfit == 'cape') {
-      _path(
-        c,
-        Path()
-          ..moveTo(cx - w * .30, h * .50)
-          ..lineTo(cx - w * .46, h * .98)
-          ..lineTo(cx + w * .46, h * .98)
-          ..lineTo(cx + w * .30, h * .50)
-          ..close(),
-        Paint()..color = const Color(0xFFD32F2F),
-      );
-    }
     switch (species) {
       case 'cat':
         for (final dx in sides) {
@@ -345,50 +328,6 @@ class _BuddyPainter extends CustomPainter {
     }
   }
 
-  void _outfit(Canvas c) {
-    final w = _w, h = _h, cx = _cx;
-    Rect box(double l, double tt, double ww, double hh) => Rect.fromLTWH(l, tt, ww, hh);
-    switch (outfit) {
-      case 'shirt':
-        final p = Paint()..color = const Color(0xFF4DA3FF);
-        _rrect(c, box(w * .24, h * .74, w * .52, h * .18), h * .05, p);
-        for (final dx in [-1.0, 1.0]) {
-          _oval(c, Rect.fromCenter(center: Offset(cx + dx * w * .28, h * .77), width: w * .14, height: h * .10), p);
-        }
-      case 'hoodie':
-        _rrect(c, box(w * .20, h * .72, w * .60, h * .22), h * .06, Paint()..color = const Color(0xFF7E57C2));
-        c.drawRRect(
-          RRect.fromRectAndRadius(box(w * .36, h * .82, w * .28, h * .08), Radius.circular(h * .03)),
-          Paint()..color = const Color(0x33000000),
-        );
-        final string = Paint()
-          ..color = const Color(0xFFFFFFFF)
-          ..strokeWidth = w * .02
-          ..strokeCap = StrokeCap.round;
-        for (final dx in [-1.0, 1.0]) {
-          c.drawLine(Offset(cx + dx * w * .06, h * .72), Offset(cx + dx * w * .06, h * .80), string);
-        }
-      case 'dress':
-        _path(
-          c,
-          Path()
-            ..moveTo(cx - w * .14, h * .72)
-            ..lineTo(cx + w * .14, h * .72)
-            ..lineTo(cx + w * .30, h * .94)
-            ..lineTo(cx - w * .30, h * .94)
-            ..close(),
-          Paint()..color = const Color(0xFFFF8CC6),
-        );
-      case 'pajamas':
-        _rrect(c, box(w * .22, h * .72, w * .56, h * .22), h * .05, Paint()..color = const Color(0xFF9FA8DA));
-        final dot = Paint()..color = const Color(0xFFFFFFFF);
-        for (var i = 0; i < 3; i++) {
-          c.drawCircle(Offset(cx - w * .16 + i * w * .16, h * .83), w * .025, dot);
-        }
-    }
-  }
-
-  // ---------- the face ----------
   void _eyes(Canvas c, _Pose p, Paint ink, Paint fill) {
     final w = _w, h = _h, cx = _cx;
     final ey = h * .55;
@@ -637,48 +576,6 @@ class _BuddyPainter extends CustomPainter {
     _eyes(c, p, ink, fill);
     _mouth(c, p, ink);
     _frontOfFace(c, ink, fill);
-    _outfit(c);
-
-    final gold = Paint()..color = const Color(0xFFFFC94D);
-    switch (accessory) {
-      case 'bow':
-        final pink = Paint()..color = const Color(0xFFFF4D8D);
-        for (final dx in [-1.0, 1.0]) {
-          _path(
-            c,
-            Path()
-              ..moveTo(cx + w * .22, h * .30)
-              ..lineTo(cx + w * .22 + dx * w * .13, h * .22)
-              ..lineTo(cx + w * .22 + dx * w * .13, h * .38)
-              ..close(),
-            pink,
-          );
-        }
-        _circ(c, Offset(cx + w * .22, h * .30), w * .03, pink);
-      case 'crown':
-        _path(
-          c,
-          Path()
-            ..moveTo(cx - w * .16, h * .28)
-            ..lineTo(cx - w * .16, h * .12)
-            ..lineTo(cx - w * .08, h * .20)
-            ..lineTo(cx, h * .08)
-            ..lineTo(cx + w * .08, h * .20)
-            ..lineTo(cx + w * .16, h * .12)
-            ..lineTo(cx + w * .16, h * .28)
-            ..close(),
-          gold,
-        );
-      case 'scarf':
-        _rrect(c, Rect.fromLTWH(w * .18, h * .78, w * .64, h * .09), h * .04, Paint()..color = const Color(0xFF4DA3FF));
-      case 'glasses':
-        for (final dx in [-1.0, 1.0]) {
-          c.drawCircle(Offset(cx + dx * w * .15, h * .55), w * .10, ink);
-        }
-        c.drawLine(Offset(cx - w * .05, h * .55), Offset(cx + w * .05, h * .55), ink);
-      case 'star':
-        _path(c, _star(Offset(cx + w * .22, h * .22), w * .10), gold);
-    }
     c.restore();
 
     // effects on top, in the buddy's own box
@@ -709,8 +606,6 @@ class _BuddyPainter extends CustomPainter {
       old.species != species ||
       old.color != color ||
       old.mood != mood ||
-      old.accessory != accessory ||
-      old.outfit != outfit ||
       old.reaction != reaction ||
       old.t != t;
 }

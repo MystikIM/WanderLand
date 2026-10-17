@@ -62,7 +62,7 @@ void main() {
   });
 
   test('JSON round trip and old/missing data loads safely', () {
-    final s = const BuddyState(name: 'Mochi', species: 'cat', accessory: 'bow', careCount: 4)
+    final s = const BuddyState(name: 'Mochi', species: 'cat', careCount: 4)
         .copyWith(updatedAt: t0, lastCare: {'feed': t0});
     final b = BuddyState.fromJson(s.toJson());
     expect(b.name, 'Mochi');

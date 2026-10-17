@@ -85,8 +85,6 @@ class BuddyCard extends StatelessWidget {
               species: b.state.species,
               color: color,
               mood: mood,
-              accessory: b.state.accessory,
-              outfit: b.state.outfit,
               size: 112,
               reaction: b.lastAction,
               reactionTick: b.actionTick,

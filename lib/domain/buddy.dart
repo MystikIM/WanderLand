@@ -41,7 +41,6 @@ class BuddyState {
   const BuddyState({
     this.name = 'Buddy',
     this.species = 'blob',
-    this.accessory = '',
     this.enabled = true,
     this.joy = 70,
     this.tummy = 70,
@@ -53,10 +52,8 @@ class BuddyState {
     this.passedAt,
     this.generation = 1,
     this.memorial = const [],
-    this.outfit = '',
   });
 
-  final String outfit;
   final bool classic;
   final DateTime? lastSeen;
   final DateTime? passedAt;
@@ -66,7 +63,6 @@ class BuddyState {
 
   final String name;
   final String species;
-  final String accessory;
   final bool enabled;
   final double joy;
   final double tummy;
@@ -77,7 +73,6 @@ class BuddyState {
   BuddyState copyWith({
     String? name,
     String? species,
-    String? accessory,
     bool? enabled,
     double? joy,
     double? tummy,
@@ -90,13 +85,10 @@ class BuddyState {
     bool clearPassed = false,
     int? generation,
     List<BuddyMemorial>? memorial,
-    String? outfit,
   }) =>
       BuddyState(
-        outfit: outfit ?? this.outfit,
         name: name ?? this.name,
         species: species ?? this.species,
-        accessory: accessory ?? this.accessory,
         enabled: enabled ?? this.enabled,
         joy: joy ?? this.joy,
         tummy: tummy ?? this.tummy,
@@ -147,13 +139,11 @@ class BuddyState {
 
   BuddyState hatchNew(DateTime now) => BuddyState(
         species: species,
-        accessory: accessory,
         enabled: enabled,
         classic: classic,
         careCount: careCount,
         generation: generation + 1,
         memorial: memorial,
-        outfit: outfit,
         lastSeen: now,
         updatedAt: now,
       );
@@ -232,7 +222,6 @@ class BuddyState {
         'id': 'buddy',
         'name': name,
         'species': species,
-        'accessory': accessory,
         'enabled': enabled,
         'joy': joy,
         'tummy': tummy,
@@ -244,13 +233,11 @@ class BuddyState {
         'passedAt': passedAt?.toIso8601String(),
         'generation': generation,
         'memorial': [for (final m in memorial) m.toJson()],
-        'outfit': outfit,
       };
 
   factory BuddyState.fromJson(Map<String, dynamic> j) => BuddyState(
         name: j['name'] as String? ?? 'Buddy',
         species: j['species'] as String? ?? 'blob',
-        accessory: j['accessory'] as String? ?? '',
         enabled: j['enabled'] as bool? ?? true,
         joy: (j['joy'] as num?)?.toDouble() ?? 70,
         tummy: (j['tummy'] as num?)?.toDouble() ?? 70,
@@ -264,7 +251,6 @@ class BuddyState {
         lastSeen: j['lastSeen'] == null ? null : DateTime.parse(j['lastSeen'] as String),
         passedAt: j['passedAt'] == null ? null : DateTime.parse(j['passedAt'] as String),
         generation: j['generation'] as int? ?? 1,
-        outfit: j['outfit'] as String? ?? '',
         memorial: [
           for (final m in (j['memorial'] as List? ?? const []))
             BuddyMemorial.fromJson(Map<String, dynamic>.from(m as Map)),

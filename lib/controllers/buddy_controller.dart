@@ -22,16 +22,6 @@ class BuddyController extends ChangeNotifier {
   int _alterCount = 0;
   int _days = 0;
 
-  Set<String> get unlocked => accessoriesUnlockedBy(earned.keys);
-  Set<String> get unlockedOutfits => outfitsUnlockedBy(earned.keys);
-
-  Future<void> setOutfit(String o) async {
-    if (o.isNotEmpty && !unlockedOutfits.contains(o)) return;
-    state = state.copyWith(outfit: o);
-    await _saveState();
-    notifyListeners();
-  }
-
   Future<void> load() async {
     final b = await _store.get(collection, 'buddy');
     if (b != null) state = BuddyState.fromJson(b);
@@ -138,13 +128,6 @@ class BuddyController extends ChangeNotifier {
   Future<void> setSpecies(String s) async {
     if (!kBuddySpecies.contains(s)) return;
     state = state.copyWith(species: s);
-    await _saveState();
-    notifyListeners();
-  }
-
-  Future<void> setAccessory(String a) async {
-    if (a.isNotEmpty && !unlocked.contains(a)) return;
-    state = state.copyWith(accessory: a);
     await _saveState();
     notifyListeners();
   }

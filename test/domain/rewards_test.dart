@@ -36,16 +36,8 @@ void main() {
     expect(g(0, 0, 50), {'care-10', 'care-50'});
   });
 
-  test('accessories unlock from badges', () {
-    expect(accessoriesUnlockedBy([]), isEmpty);
-    expect(accessoriesUnlockedBy(['first-alter']), {'bow'});
-    expect(accessoriesUnlockedBy(['alters-10', 'checkin-7']), {'crown', 'glasses'});
-    expect(accessoriesUnlockedBy(['first-checkin']), isEmpty);
-  });
-
   test('every badge has a unique id and a how-to text', () {
     expect(kBadges.map((b) => b.id).toSet().length, kBadges.length);
     expect(kBadges.every((b) => b.how.isNotEmpty && b.title.isNotEmpty), isTrue);
-    expect(kAccessories.toSet(), containsAll(kBadges.map((b) => b.accessory).where((a) => a.isNotEmpty)));
   });
 }
