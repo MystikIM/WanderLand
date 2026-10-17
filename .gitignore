@@ -64,3 +64,5 @@ relay-data/
 # Without these files the app falls back to the drawn placeholder art.
 assets/art/*
 !assets/art/.gitkeep
+
+android/.kotlin/
