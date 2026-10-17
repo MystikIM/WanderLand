@@ -9,7 +9,7 @@ ads, no tracking, no account needed, and your data stays on your phone.
 scrambled, off until you switch it on. It is the only thing that uses the internet.
 Versions before 0.2.0 have no internet permission at all.
 
-**Real art (new in 0.3.0):** the released app uses hand-made pictures for the Inner World
+**Real art (new in 0.3.0):** the released app uses new artwork for the Inner World
 pieces, the buddy and its care props, avatar frames, badges, the dedication card and the
 empty screens. Those pictures are (c) MystikIM and are **not** in this repository. Without
 them the app still runs and shows the drawn placeholder art, so you can build it yourself
